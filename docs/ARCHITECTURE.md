@@ -8,34 +8,34 @@ Kythia is divided into two strict boundaries: the **Presentation Layer** and the
 
 ```mermaid
 graph TD;
-    subgraph Presentation Layer
-        UI[React + Vite Frontend]
-        Tray[Mini Tray UI]
+    subgraph PresentationLayer ["Presentation Layer"]
+        UI["React + Vite Frontend"]
+        Tray["Mini Tray UI"]
     end
 
-    subgraph System Orchestration Layer (Rust)
-        Core[Tauri Core]
-        Tokio[Tokio Async Runtime]
-        Downloader[HTTP Reqwest / Asset Downloader]
-        Services[Service Managers: Nginx, PHP, MariaDB, etc.]
-        State[Global Mutex State / PIDs]
+    subgraph OrchestrationLayer ["System Orchestration Layer (Rust)"]
+        Core["Tauri Core"]
+        Tokio["Tokio Async Runtime"]
+        Downloader["HTTP Reqwest / Asset Downloader"]
+        Services["Service Managers: Nginx, PHP, MariaDB, etc."]
+        State["Global Mutex State / PIDs"]
     end
 
-    subgraph Host OS (Windows)
-        Processes[Child Processes]
-        FileSystem[Isolated Binaries / C:\kythia\]
-        Network[TCP/IP Ports]
-        HostsFile[C:\Windows\System32\drivers\etc\hosts]
+    subgraph HostOS ["Host OS (Windows)"]
+        Processes["Child Processes"]
+        FileSystem["Isolated Binaries / C:/kythia/"]
+        Network["TCP/IP Ports"]
+        HostsFile["C:/Windows/System32/drivers/etc/hosts"]
     end
 
-    UI <-->|IPC JSON Payload| Core
-    Tray <-->|IPC| Core
+    UI <-->|"IPC JSON Payload"| Core
+    Tray <-->|"IPC"| Core
     Core --> Tokio
     Tokio --> Services
     Tokio --> Downloader
-    Services -->|Spawn & Kill| Processes
-    Services -->|Check Port Conflict| Network
-    Services -->|Auto-Config Virtual Hosts| HostsFile
+    Services -->|"Spawn & Kill"| Processes
+    Services -->|"Check Port Conflict"| Network
+    Services -->|"Auto-Config Virtual Hosts"| HostsFile
     Services <--> State
     Downloader --> FileSystem
 ```
