@@ -1,12 +1,14 @@
 use crate::downloader;
+use crate::settings;
 use serde::{Deserialize, Serialize};
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use std::os::windows::process::CommandExt;
-use crate::settings;
 
 fn get_port() -> u16 {
-    settings::get_settings().map(|s| s.postgres.port).unwrap_or(5432)
+    settings::get_settings()
+        .map(|s| s.postgres.port)
+        .unwrap_or(5432)
 }
 
 fn bin_dir() -> PathBuf {
@@ -41,17 +43,16 @@ pub fn is_initialized() -> bool {
 
 pub async fn fetch_versions() -> Result<Vec<PostgresRelease>, String> {
     let mut releases = Vec::new();
-    
-    let versions = vec![
-        "16.3-1",
-        "15.7-1",
-        "14.12-1",
-    ];
+
+    let versions = vec!["16.3-1", "15.7-1", "14.12-1"];
 
     for ver in versions {
         releases.push(PostgresRelease {
             version: ver.to_string(),
-            url: format!("https://get.enterprisedb.com/postgresql/postgresql-{}-windows-x64-binaries.zip", ver),
+            url: format!(
+                "https://get.enterprisedb.com/postgresql/postgresql-{}-windows-x64-binaries.zip",
+                ver
+            ),
         });
     }
 
@@ -66,7 +67,14 @@ pub fn get_installed() -> Vec<String> {
     let mut v: Vec<String> = std::fs::read_dir(&base)
         .map(|d| {
             d.filter_map(|e| e.ok())
-                .filter(|e| e.path().join("bin").join("postgres.exe").exists() || e.path().join("pgsql").join("bin").join("postgres.exe").exists())
+                .filter(|e| {
+                    e.path().join("bin").join("postgres.exe").exists()
+                        || e.path()
+                            .join("pgsql")
+                            .join("bin")
+                            .join("postgres.exe")
+                            .exists()
+                })
                 .filter_map(|e| e.file_name().into_string().ok())
                 .collect()
         })
@@ -97,7 +105,11 @@ pub async fn install(app: &AppHandle, version: &str, url: &str) -> Result<String
 pub fn initialize(version: &str) -> Result<String, String> {
     let mut initdb = bin_dir().join(version).join("bin").join("initdb.exe");
     if !initdb.exists() {
-        initdb = bin_dir().join(version).join("pgsql").join("bin").join("initdb.exe");
+        initdb = bin_dir()
+            .join(version)
+            .join("pgsql")
+            .join("bin")
+            .join("initdb.exe");
         if !initdb.exists() {
             return Err(format!("PostgreSQL not found for {}.", version));
         }
@@ -128,14 +140,20 @@ pub fn initialize(version: &str) -> Result<String, String> {
         return Err(format!("Initialization failed:\n{}\n{}", stderr, stdout));
     }
 
-    Ok("PostgreSQL data directory initialized successfully. Root user 'postgres' has no password.".to_string())
+    Ok(
+        "PostgreSQL data directory initialized successfully. Root user 'postgres' has no password."
+            .to_string(),
+    )
 }
 
 pub fn start(version: &str) -> Result<u32, String> {
     if is_running() {
         let port = get_port();
         if let Some((proc_name, pid)) = crate::downloader::get_conflicting_process(port) {
-            return Err(format!("Port {} is blocked by '{}' (PID: {}). Please stop it first.", port, proc_name, pid));
+            return Err(format!(
+                "Port {} is blocked by '{}' (PID: {}). Please stop it first.",
+                port, proc_name, pid
+            ));
         } else {
             return Err(format!("Port {} is already in use.", port));
         }
@@ -143,7 +161,11 @@ pub fn start(version: &str) -> Result<u32, String> {
 
     let mut postgres = bin_dir().join(version).join("bin").join("postgres.exe");
     if !postgres.exists() {
-        postgres = bin_dir().join(version).join("pgsql").join("bin").join("postgres.exe");
+        postgres = bin_dir()
+            .join(version)
+            .join("pgsql")
+            .join("bin")
+            .join("postgres.exe");
         if !postgres.exists() {
             return Err(format!("PostgreSQL {} is not installed.", version));
         }
@@ -157,15 +179,16 @@ pub fn start(version: &str) -> Result<u32, String> {
     let log_file = logs_dir().join("postgres.log");
 
     let child = std::process::Command::new(&postgres)
-        .args([
-            "-D",
-            &data.to_string_lossy(),
-            "-p",
-            &get_port().to_string(),
-        ])
+        .args(["-D", &data.to_string_lossy(), "-p", &get_port().to_string()])
         .creation_flags(0x08000000)
-        .stdout(std::fs::File::create(&log_file).unwrap_or_else(|_| std::fs::File::create("NUL").unwrap()))
-        .stderr(std::fs::File::create(&log_file).unwrap_or_else(|_| std::fs::File::create("NUL").unwrap()))
+        .stdout(
+            std::fs::File::create(&log_file)
+                .unwrap_or_else(|_| std::fs::File::create("NUL").unwrap()),
+        )
+        .stderr(
+            std::fs::File::create(&log_file)
+                .unwrap_or_else(|_| std::fs::File::create("NUL").unwrap()),
+        )
         .spawn()
         .map_err(|e| format!("Failed to start PostgreSQL: {}", e))?;
 
@@ -200,7 +223,9 @@ pub fn get_logs(lines: usize) -> Vec<String> {
     let log_path = logs_dir().join("postgres.log");
     let out = downloader::tail_file(&log_path, lines);
     if out.is_empty() {
-        return vec!["[No PostgreSQL logs yet. Initialize and start the database first.]".to_string()];
+        return vec![
+            "[No PostgreSQL logs yet. Initialize and start the database first.]".to_string(),
+        ];
     }
     out
 }
@@ -211,8 +236,7 @@ pub fn clear_logs() {
 }
 
 fn cmp_versions(a: &str, b: &str) -> std::cmp::Ordering {
-    let parse = |s: &str| -> Vec<u32> {
-        s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect()
-    };
+    let parse =
+        |s: &str| -> Vec<u32> { s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect() };
     parse(a).cmp(&parse(b))
 }

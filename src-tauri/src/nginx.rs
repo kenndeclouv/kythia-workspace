@@ -1,9 +1,9 @@
 use crate::downloader;
 use crate::settings;
 use regex::Regex;
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use std::os::windows::process::CommandExt;
 
 fn get_port() -> u16 {
     settings::get_settings().map(|s| s.nginx.port).unwrap_or(80)
@@ -105,7 +105,10 @@ pub async fn install(app: &AppHandle, version: &str) -> Result<String, String> {
     patch_conf(&dest)?;
 
     let _ = std::fs::remove_file(&zip_path);
-    Ok(format!("Nginx {} installed to C:\\kythia\\bin\\nginx\\{}", version, version))
+    Ok(format!(
+        "Nginx {} installed to C:\\kythia\\bin\\nginx\\{}",
+        version, version
+    ))
 }
 
 fn patch_conf(dest: &PathBuf) -> Result<(), String> {
@@ -125,8 +128,6 @@ fn patch_conf(dest: &PathBuf) -> Result<(), String> {
 
     let patched = error_re.replace(&content, format!("error_log  {};", error_log));
     let patched = access_re.replace(&patched, format!("access_log  {};", access_log));
-    
-
 
     std::fs::write(&conf_path, patched.as_bytes()).map_err(|e| e.to_string())?;
     Ok(())
@@ -138,9 +139,15 @@ pub fn start(version: &str) -> Result<(), String> {
     let port = get_port();
     if is_running() {
         if let Some((proc_name, pid)) = crate::downloader::get_conflicting_process(port) {
-            return Err(format!("Port {} is blocked by '{}' (PID: {}). Please stop it first.", port, proc_name, pid));
+            return Err(format!(
+                "Port {} is blocked by '{}' (PID: {}). Please stop it first.",
+                port, proc_name, pid
+            ));
         } else {
-            return Err(format!("Port {} is already in use. Stop the conflicting process first.", port));
+            return Err(format!(
+                "Port {} is already in use. Stop the conflicting process first.",
+                port
+            ));
         }
     }
 
@@ -158,7 +165,12 @@ pub fn start(version: &str) -> Result<(), String> {
         .current_dir(&dir)
         .creation_flags(0x08000000)
         .spawn()
-        .map_err(|e| format!("Failed to launch nginx.exe: {}. Try running as Administrator.", e))?;
+        .map_err(|e| {
+            format!(
+                "Failed to launch nginx.exe: {}. Try running as Administrator.",
+                e
+            )
+        })?;
 
     // Poll for up to 6 seconds
     for _ in 0..30 {
@@ -168,9 +180,10 @@ pub fn start(version: &str) -> Result<(), String> {
         }
     }
 
-    Err(
-        format!("Nginx did not bind port {}. Check logs or try running Kythia as Administrator.", port)
-    )
+    Err(format!(
+        "Nginx did not bind port {}. Check logs or try running Kythia as Administrator.",
+        port
+    ))
 }
 
 fn patch_conf_dynamic(version: &str) -> Result<(), String> {
@@ -178,20 +191,25 @@ fn patch_conf_dynamic(version: &str) -> Result<(), String> {
     if !conf_path.exists() {
         return Ok(());
     }
-    
+
     let settings = settings::get_settings().unwrap_or_default();
     let content = std::fs::read_to_string(&conf_path).map_err(|e| e.to_string())?;
 
     let listen_re = Regex::new(r"listen\s+\d+;").unwrap();
-    let patched = listen_re.replace(&content, format!("listen       {};", settings.nginx.port).as_str());
+    let patched = listen_re.replace(
+        &content,
+        format!("listen       {};", settings.nginx.port).as_str(),
+    );
 
     let root_re = Regex::new(r"(location\s+/\s*\{[\s\r\n]*)root\s+[^;]+;").unwrap();
     let doc_root = settings.document_root.replace('\\', "/");
     let patched = root_re.replace(&patched, format!("${{1}}root   {};", doc_root).as_str());
-    
+
     // Add index.php to index directive
     let index_re = Regex::new(r"index\s+index\.html\s+index\.htm;").unwrap();
-    let mut patched = index_re.replace(&patched, "index  index.php index.html index.htm;").to_string();
+    let mut patched = index_re
+        .replace(&patched, "index  index.php index.html index.htm;")
+        .to_string();
 
     // Add PHP FastCGI location block before error_page
     if !patched.contains("SCRIPT_FILENAME  $document_root$fastcgi_script_name;") {
@@ -209,16 +227,23 @@ fn patch_conf_dynamic(version: &str) -> Result<(), String> {
         }}
 
         error_page   500 502 503 504  /50x.html;"#,
-            doc_root,
-            settings.php.port
+            doc_root, settings.php.port
         );
-        let error_page_re = Regex::new(r"error_page\s+500\s+502\s+503\s+504\s+/50x\.html;").unwrap();
-        patched = error_page_re.replace(&patched, regex::NoExpand(php_block.as_str())).to_string();
+        let error_page_re =
+            Regex::new(r"error_page\s+500\s+502\s+503\s+504\s+/50x\.html;").unwrap();
+        patched = error_page_re
+            .replace(&patched, regex::NoExpand(php_block.as_str()))
+            .to_string();
     } else {
         let fastcgi_pass_re = Regex::new(r"fastcgi_pass\s+127\.0\.0\.1:\d+;").unwrap();
-        patched = fastcgi_pass_re.replace(&patched, format!("fastcgi_pass   127.0.0.1:{};", settings.php.port).as_str()).to_string();
+        patched = fastcgi_pass_re
+            .replace(
+                &patched,
+                format!("fastcgi_pass   127.0.0.1:{};", settings.php.port).as_str(),
+            )
+            .to_string();
     }
-    
+
     // Add dynamic virtual host block at the end (before the last closing brace)
     let domain_suffix = settings.local_domain;
     let vhost_block = format!(
@@ -248,23 +273,29 @@ fn patch_conf_dynamic(version: &str) -> Result<(), String> {
         }}
     }}
 }}"#,
-        settings.nginx.port,
-        domain_suffix,
-        doc_root,
-        doc_root,
-        settings.php.port
+        settings.nginx.port, domain_suffix, doc_root, doc_root, settings.php.port
     );
 
     // Ensure include directive is present
     if !patched.contains("include C:/kythia/bin/nginx/conf/sites-enabled/*.conf;") {
         let last_brace_re = Regex::new(r"\}\s*$").unwrap();
-        patched = last_brace_re.replace(&patched, "    include C:/kythia/bin/nginx/conf/sites-enabled/*.conf;\n}").to_string();
+        patched = last_brace_re
+            .replace(
+                &patched,
+                "    include C:/kythia/bin/nginx/conf/sites-enabled/*.conf;\n}",
+            )
+            .to_string();
     }
-    
+
     // Replace the final '}' with our new server block + '}'
-    if !patched.contains(&format!("server_name  ~^(?<project>.+)\\.{}$", domain_suffix)) {
+    if !patched.contains(&format!(
+        "server_name  ~^(?<project>.+)\\.{}$",
+        domain_suffix
+    )) {
         let last_brace_re = Regex::new(r"\}\s*$").unwrap();
-        patched = last_brace_re.replace(&patched, regex::NoExpand(vhost_block.as_str())).to_string();
+        patched = last_brace_re
+            .replace(&patched, regex::NoExpand(vhost_block.as_str()))
+            .to_string();
     }
 
     std::fs::write(&conf_path, patched.as_bytes()).map_err(|e| e.to_string())?;
@@ -275,7 +306,7 @@ fn patch_conf_dynamic(version: &str) -> Result<(), String> {
 fn create_welcome_page() -> Result<(), String> {
     let settings = settings::get_settings().unwrap_or_default();
     let doc_root = PathBuf::from(&settings.document_root);
-    
+
     if !doc_root.exists() {
         std::fs::create_dir_all(&doc_root).map_err(|e| e.to_string())?;
     }
@@ -326,8 +357,6 @@ pub fn clear_logs() {
 }
 
 fn cmp_versions(a: &str, b: &str) -> std::cmp::Ordering {
-    let parse = |s: &str| -> Vec<u32> {
-        s.split('.').filter_map(|n| n.parse().ok()).collect()
-    };
+    let parse = |s: &str| -> Vec<u32> { s.split('.').filter_map(|n| n.parse().ok()).collect() };
     parse(a).cmp(&parse(b))
 }

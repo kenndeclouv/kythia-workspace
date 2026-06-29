@@ -48,6 +48,8 @@ export function Nginx() {
         version: selectedVersion
       });
       toast.success(msg);
+      await invoke('add_xp', { amount: 20 }).catch(() => {});
+      window.dispatchEvent(new Event('gamification-update'));
       fetchData(); // Refresh installed list
     } catch (e: any) {
       toast.error(`Install failed: ${e}`);
@@ -70,13 +72,18 @@ export function Nginx() {
               <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Available Versions
               </label>
-              <Select disabled={isFetching || isInstalling} value={selectedVersion} onValueChange={(v) => v && setSelectedVersion(v)}>
+              <Select 
+                disabled={isFetching || isInstalling} 
+                value={selectedVersion} 
+                onValueChange={(v) => v && setSelectedVersion(v)}
+                items={releases.map(r => ({ value: r.version, label: `Nginx ${r.version}` }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={isFetching ? "Fetching versions..." : "Select version"} />
                 </SelectTrigger>
                 <SelectContent>
                   {releases.map(r => (
-                    <SelectItem key={r.version} value={r.version}>Nginx {r.version}</SelectItem>
+                    <SelectItem key={r.version} value={r.version} label={`Nginx ${r.version}`}>Nginx {r.version}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

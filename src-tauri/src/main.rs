@@ -1,23 +1,25 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod apps;
 mod cache;
 mod downloader;
-mod mariadb;
-mod nginx;
-mod packages;
-mod php;
-mod settings;
-mod state;
-mod apps;
-mod mysql;
-mod postgres;
-mod mongodb;
-mod redis;
+mod gamification;
 mod hosts;
 mod mailpit;
-mod sites;
+mod mariadb;
+mod mongodb;
+mod mysql;
+mod nginx;
 mod ngrok;
+mod packages;
+mod php;
+mod postgres;
 mod projects;
+mod redis;
+mod settings;
+mod sites;
+mod state;
+mod system;
 
 use serde::Serialize;
 use state::AppState;
@@ -46,7 +48,7 @@ pub struct PortConflict {
 fn check_port_conflicts() -> Vec<PortConflict> {
     let mut conflicts = Vec::new();
     let s = settings::get_settings().unwrap_or_default();
-    
+
     let checks = vec![
         ("Nginx", s.nginx.port),
         ("PHP FastCGI", s.php.port),
@@ -57,22 +59,23 @@ fn check_port_conflicts() -> Vec<PortConflict> {
         ("Mailpit SMTP", s.mailpit.smtp_port),
         ("Mailpit UI", s.mailpit.ui_port),
     ];
-    
+
     for (service, port) in checks {
         if let Some((proc_name, pid)) = downloader::get_conflicting_process(port) {
             let lower_proc = proc_name.to_lowercase();
-            if lower_proc.contains("nginx") || 
-               lower_proc.contains("php-cgi") || 
-               lower_proc.contains("mariadbd") || 
-               lower_proc.contains("mysqld") || 
-               lower_proc.contains("postgres") || 
-               lower_proc.contains("mongod") || 
-               lower_proc.contains("redis-server") || 
-               lower_proc.contains("mailpit") ||
-               lower_proc.contains("kythia") {
+            if lower_proc.contains("nginx")
+                || lower_proc.contains("php-cgi")
+                || lower_proc.contains("mariadbd")
+                || lower_proc.contains("mysqld")
+                || lower_proc.contains("postgres")
+                || lower_proc.contains("mongod")
+                || lower_proc.contains("redis-server")
+                || lower_proc.contains("mailpit")
+                || lower_proc.contains("kythia")
+            {
                 continue;
             }
-            
+
             conflicts.push(PortConflict {
                 service: service.to_string(),
                 port,
@@ -81,7 +84,7 @@ fn check_port_conflicts() -> Vec<PortConflict> {
             });
         }
     }
-    
+
     conflicts
 }
 
@@ -183,20 +186,12 @@ async fn install_php(app: AppHandle, version: String, url: String) -> Result<Str
 }
 
 #[tauri::command]
-async fn install_mariadb(
-    app: AppHandle,
-    version: String,
-    url: String,
-) -> Result<String, String> {
+async fn install_mariadb(app: AppHandle, version: String, url: String) -> Result<String, String> {
     mariadb::install(&app, &version, &url).await
 }
 
 #[tauri::command]
-async fn install_mysql(
-    app: AppHandle,
-    version: String,
-    url: String,
-) -> Result<String, String> {
+async fn install_mysql(app: AppHandle, version: String, url: String) -> Result<String, String> {
     mysql::install(&app, &version, &url).await
 }
 
@@ -218,6 +213,7 @@ async fn install_mailpit(app: AppHandle, version: String) -> Result<String, Stri
 // ────────────────────────────────────────────────────────────────
 // MariaDB – initialize data directory
 // ────────────────────────────────────────────────────────────────
+
 
 #[tauri::command]
 fn init_mariadb(version: String) -> Result<String, String> {
@@ -460,7 +456,9 @@ fn get_mariadb_status(state: State<'_, AppState>) -> ServiceStatus {
         running,
         pid: if running { pid } else { None },
         port: if running {
-            let p = settings::get_settings().map(|s| s.mariadb.port).unwrap_or(3306);
+            let p = settings::get_settings()
+                .map(|s| s.mariadb.port)
+                .unwrap_or(3306);
             Some(p)
         } else {
             None
@@ -483,7 +481,9 @@ fn get_mysql_status(state: State<'_, AppState>) -> ServiceStatus {
         running,
         pid: if running { pid } else { None },
         port: if running {
-            let p = settings::get_settings().map(|s| s.mariadb.port).unwrap_or(3306);
+            let p = settings::get_settings()
+                .map(|s| s.mariadb.port)
+                .unwrap_or(3306);
             Some(p)
         } else {
             None
@@ -506,7 +506,9 @@ fn get_postgres_status(state: State<'_, AppState>) -> ServiceStatus {
         running,
         pid: if running { pid } else { None },
         port: if running {
-            let p = settings::get_settings().map(|s| s.postgres.port).unwrap_or(5432);
+            let p = settings::get_settings()
+                .map(|s| s.postgres.port)
+                .unwrap_or(5432);
             Some(p)
         } else {
             None
@@ -529,7 +531,9 @@ fn get_mongodb_status(state: State<'_, AppState>) -> ServiceStatus {
         running,
         pid: if running { pid } else { None },
         port: if running {
-            let p = settings::get_settings().map(|s| s.mongodb.port).unwrap_or(27017);
+            let p = settings::get_settings()
+                .map(|s| s.mongodb.port)
+                .unwrap_or(27017);
             Some(p)
         } else {
             None
@@ -593,6 +597,34 @@ fn get_mailpit_status(state: State<'_, AppState>) -> ServiceStatus {
     }
 }
 
+#[derive(Serialize)]
+pub struct AllServicesStatus {
+    pub nginx: ServiceStatus,
+    pub php: ServiceStatus,
+    pub mariadb: ServiceStatus,
+    pub mysql: ServiceStatus,
+    pub postgres: ServiceStatus,
+    pub mongodb: ServiceStatus,
+    pub redis: ServiceStatus,
+    pub mailpit: ServiceStatus,
+    pub conflicts: Vec<PortConflict>,
+}
+
+#[tauri::command]
+fn get_all_services_status(state: State<'_, AppState>) -> AllServicesStatus {
+    AllServicesStatus {
+        nginx: get_nginx_status(state.clone()),
+        php: get_php_status(state.clone()),
+        mariadb: get_mariadb_status(state.clone()),
+        mysql: get_mysql_status(state.clone()),
+        postgres: get_postgres_status(state.clone()),
+        mongodb: get_mongodb_status(state.clone()),
+        redis: get_redis_status(state.clone()),
+        mailpit: get_mailpit_status(state.clone()),
+        conflicts: check_port_conflicts(),
+    }
+}
+
 // ────────────────────────────────────────────────────────────────
 // Log viewer
 // ────────────────────────────────────────────────────────────────
@@ -633,25 +665,39 @@ fn get_redis_logs(lines: usize) -> Vec<String> {
 }
 
 #[tauri::command]
-fn clear_nginx_logs() { nginx::clear_logs(); }
+fn clear_nginx_logs() {
+    nginx::clear_logs();
+}
 
 #[tauri::command]
-fn clear_mariadb_logs() { mariadb::clear_logs(); }
+fn clear_mariadb_logs() {
+    mariadb::clear_logs();
+}
 
 #[tauri::command]
-fn clear_mysql_logs() { mysql::clear_logs(); }
+fn clear_mysql_logs() {
+    mysql::clear_logs();
+}
 
 #[tauri::command]
-fn clear_postgres_logs() { postgres::clear_logs(); }
+fn clear_postgres_logs() {
+    postgres::clear_logs();
+}
 
 #[tauri::command]
-fn clear_mongodb_logs() { mongodb::clear_logs(); }
+fn clear_mongodb_logs() {
+    mongodb::clear_logs();
+}
 
 #[tauri::command]
-fn clear_php_logs() { php::clear_logs(); }
+fn clear_php_logs() {
+    php::clear_logs();
+}
 
 #[tauri::command]
-fn clear_redis_logs() { redis::clear_logs(); }
+fn clear_redis_logs() {
+    redis::clear_logs();
+}
 
 #[tauri::command]
 fn show_main_window(app: tauri::AppHandle, tab: Option<String>) {
@@ -659,6 +705,7 @@ fn show_main_window(app: tauri::AppHandle, tab: Option<String>) {
         if let Some(t) = tab {
             let _ = window.emit("navigate", t);
         }
+        let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
     }
@@ -670,21 +717,31 @@ fn show_main_window(app: tauri::AppHandle, tab: Option<String>) {
 
 mod env;
 
-use tauri::{Manager, Emitter};
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{TrayIconBuilder, MouseButton, MouseButtonState, TrayIconEvent};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::{Emitter, Manager};
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--hidden"])))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--hidden"]),
+        ))
         .manage(AppState::new())
+        .manage(system::SysState(std::sync::Mutex::new(sysinfo::System::new_all())))
         .setup(|app| {
+            gamification::start_time_tracker(app.handle().clone());
+            gamification::start_git_watcher(app.handle().clone());
+
             let quit_i = MenuItem::with_id(app, "quit", "Quit Kythia", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "show", "Show Workspace", true, None::<&str>)?;
-            let start_all_i = MenuItem::with_id(app, "start_all", "Start All Services", true, None::<&str>)?;
-            let stop_all_i = MenuItem::with_id(app, "stop_all", "Stop All Services", true, None::<&str>)?;
-            
+            let start_all_i =
+                MenuItem::with_id(app, "start_all", "Start All Services", true, None::<&str>)?;
+            let stop_all_i =
+                MenuItem::with_id(app, "stop_all", "Stop All Services", true, None::<&str>)?;
+
             let menu = Menu::with_items(app, &[&show_i, &start_all_i, &stop_all_i, &quit_i])?;
 
             TrayIconBuilder::new()
@@ -714,15 +771,21 @@ fn main() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| match event {
-                    TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } => {
+                    TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } => {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("tray") {
                             if window.is_visible().unwrap_or(false) {
                                 let _ = window.hide();
                             } else {
                                 if let Ok(Some(rect)) = tray.rect() {
-                                    let win_size = window.outer_size().unwrap_or(tauri::PhysicalSize::new(320, 480));
-                                    
+                                    let win_size = window
+                                        .outer_size()
+                                        .unwrap_or(tauri::PhysicalSize::new(320, 480));
+
                                     let tray_x = match rect.position {
                                         tauri::Position::Physical(p) => p.x as i32,
                                         tauri::Position::Logical(p) => p.x as i32,
@@ -740,19 +803,32 @@ fn main() {
                                     let tray_center_x = tray_x + (tray_width / 2);
                                     let x = tray_center_x - (win_size.width as i32 / 2);
                                     let y = tray_y - win_size.height as i32 - 10;
-                                    
+
                                     // clamp to screen if monitor available
-                                    let (final_x, final_y) = if let Ok(Some(monitor)) = window.current_monitor() {
+                                    let (final_x, final_y) = if let Ok(Some(monitor)) =
+                                        window.current_monitor()
+                                    {
                                         let screen_size = monitor.size();
                                         (
-                                            x.clamp(0, (screen_size.width as i32 - win_size.width as i32).max(0)),
-                                            y.clamp(0, (screen_size.height as i32 - win_size.height as i32).max(0))
+                                            x.clamp(
+                                                0,
+                                                (screen_size.width as i32 - win_size.width as i32)
+                                                    .max(0),
+                                            ),
+                                            y.clamp(
+                                                0,
+                                                (screen_size.height as i32
+                                                    - win_size.height as i32)
+                                                    .max(0),
+                                            ),
                                         )
                                     } else {
                                         (x, y)
                                     };
 
-                                    let _ = window.set_position(tauri::PhysicalPosition::new(final_x, final_y));
+                                    let _ = window.set_position(tauri::PhysicalPosition::new(
+                                        final_x, final_y,
+                                    ));
                                 }
                                 let _ = window.show();
                                 let _ = window.set_focus();
@@ -767,10 +843,14 @@ fn main() {
         })
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {
-                let settings = settings::get_settings().unwrap_or_default();
-                if settings.close_to_tray {
-                    window.hide().unwrap();
-                    api.prevent_close();
+                if window.label() == "main" {
+                    let settings = settings::get_settings().unwrap_or_default();
+                    if settings.close_to_tray {
+                        window.hide().unwrap();
+                        api.prevent_close();
+                    } else {
+                        window.app_handle().exit(0);
+                    }
                 }
             }
             tauri::WindowEvent::Focused(focused) => {
@@ -790,7 +870,9 @@ fn main() {
             fetch_mongodb_versions,
             fetch_mailpit_versions,
             clear_all_cache,
+            system::get_system_stats,
             get_installed_nginx,
+            get_all_services_status,
             get_installed_php,
             get_installed_mariadb,
             get_installed_mysql,
@@ -917,6 +999,16 @@ fn main() {
             ngrok::get_shared_sites,
             projects::create_project,
             quit_app,
+            gamification::get_gamification_data,
+            gamification::add_xp,
+            gamification::add_coins,
+            gamification::unlock_achievement,
+            gamification::purchase_item,
+            gamification::equip_theme,
+            gamification::equip_sound,
+            gamification::equip_badge,
+            gamification::delete_account,
+            gamification::update_profile,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application")

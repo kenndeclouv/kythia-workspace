@@ -37,17 +37,26 @@ export function DatabaseManager({
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm text-muted-foreground hidden sm:inline-block">Active Engine:</span>
-          <Select value={activeEngine} onValueChange={(val) => val && onEngineChange(val)}>
+          <Select 
+            value={activeEngine} 
+            onValueChange={(val) => val && onEngineChange(val)}
+            items={[
+              { value: 'mysql', label: 'MySQL' },
+              { value: 'mariadb', label: 'MariaDB' },
+              { value: 'postgres', label: 'PostgreSQL' },
+              { value: 'mongodb', label: 'MongoDB' },
+            ]}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select Engine" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Database Engines</SelectLabel>
-                <SelectItem value="mysql">MySQL</SelectItem>
-                <SelectItem value="mariadb">MariaDB</SelectItem>
-                <SelectItem value="postgres">PostgreSQL</SelectItem>
-                <SelectItem value="mongodb">MongoDB</SelectItem>
+                <SelectItem value="mysql" label="MySQL">MySQL</SelectItem>
+                <SelectItem value="mariadb" label="MariaDB">MariaDB</SelectItem>
+                <SelectItem value="postgres" label="PostgreSQL">PostgreSQL</SelectItem>
+                <SelectItem value="mongodb" label="MongoDB">MongoDB</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

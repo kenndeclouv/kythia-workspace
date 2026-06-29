@@ -231,13 +231,18 @@ export function PhpConfig({ activePhpVersion, installedVersions, onPhpVersionCha
           <p className="text-muted-foreground text-sm">Fine-tune your active php.ini seamlessly.</p>
         </div>
         <div className="flex items-center gap-4">
-          <Select disabled={isLoading} value={currentVersion} onValueChange={(val) => val && onPhpVersionChange(val)}>
+          <Select 
+            disabled={isLoading}
+            value={currentVersion} 
+            onValueChange={(val) => val && onPhpVersionChange(val)}
+            items={installedVersions.map(v => ({ value: v, label: `PHP ${v}` }))}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select version" />
             </SelectTrigger>
             <SelectContent>
               {installedVersions.map(v => (
-                <SelectItem key={v} value={v}>PHP {v}</SelectItem>
+                <SelectItem key={v} value={v} label={`PHP ${v}`}>PHP {v}</SelectItem>
               ))}
             </SelectContent>
           </Select>

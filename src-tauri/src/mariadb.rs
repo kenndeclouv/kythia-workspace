@@ -1,12 +1,14 @@
 use crate::downloader;
+use crate::settings;
 use serde::{Deserialize, Serialize};
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use std::os::windows::process::CommandExt;
-use crate::settings;
 
 fn get_port() -> u16 {
-    settings::get_settings().map(|s| s.mariadb.port).unwrap_or(3306)
+    settings::get_settings()
+        .map(|s| s.mariadb.port)
+        .unwrap_or(3306)
 }
 
 fn bin_dir() -> PathBuf {
@@ -120,7 +122,10 @@ pub async fn fetch_versions() -> Result<Vec<MariaDbRelease>, String> {
         if let Some(patch_ver) = patch_versions.first() {
             if let Some(release) = data.releases.get(*patch_ver) {
                 let file = release.files.iter().find(|f| {
-                    f.package_type.as_ref().map(|s| s.to_lowercase().contains("zip")).unwrap_or(false)
+                    f.package_type
+                        .as_ref()
+                        .map(|s| s.to_lowercase().contains("zip"))
+                        .unwrap_or(false)
                         && f.file_name.contains("winx64")
                         && f.cpu.as_deref().unwrap_or("") == "x86_64"
                 });
@@ -187,7 +192,10 @@ pub async fn install(app: &AppHandle, version: &str, url: &str) -> Result<String
 }
 
 pub fn initialize(version: &str) -> Result<String, String> {
-    let installer = bin_dir().join(version).join("bin").join("mysql_install_db.exe");
+    let installer = bin_dir()
+        .join(version)
+        .join("bin")
+        .join("mysql_install_db.exe");
     if !installer.exists() {
         return Err(format!("MariaDB installer not found for {}.", version));
     }
@@ -201,10 +209,7 @@ pub fn initialize(version: &str) -> Result<String, String> {
     }
 
     let output = std::process::Command::new(&installer)
-        .args([
-            &format!("--datadir={}", data.display()),
-            "--default-user",
-        ])
+        .args([&format!("--datadir={}", data.display()), "--default-user"])
         .creation_flags(0x08000000)
         .output()
         .map_err(|e| format!("Failed to run mysql_install_db.exe: {}", e))?;
@@ -223,7 +228,10 @@ pub fn start(version: &str) -> Result<u32, String> {
     if is_running() {
         let port = get_port();
         if let Some((proc_name, pid)) = crate::downloader::get_conflicting_process(port) {
-            return Err(format!("Port {} is blocked by '{}' (PID: {}). Please stop it first.", port, proc_name, pid));
+            return Err(format!(
+                "Port {} is blocked by '{}' (PID: {}). Please stop it first.",
+                port, proc_name, pid
+            ));
         } else {
             return Err(format!("Port {} is already in use.", port));
         }
@@ -298,8 +306,7 @@ pub fn clear_logs() {
 }
 
 fn cmp_versions(a: &str, b: &str) -> std::cmp::Ordering {
-    let parse = |s: &str| -> Vec<u32> {
-        s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect()
-    };
+    let parse =
+        |s: &str| -> Vec<u32> { s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect() };
     parse(a).cmp(&parse(b))
 }

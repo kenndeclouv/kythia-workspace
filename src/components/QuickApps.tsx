@@ -87,6 +87,9 @@ export function QuickApps() {
     try {
       await invoke(`install_${app}`);
       toast.success(`${title} installed successfully!`);
+      await invoke('add_xp', { amount: 30 }).catch(() => {});
+      window.dispatchEvent(new CustomEvent('unlock-achievement', { detail: { id: 'speed_demon' } }));
+      window.dispatchEvent(new Event('gamification-update'));
       checkStatus(app);
     } catch (e: any) {
       toast.error(`Installation failed: ${e}`);
@@ -205,10 +208,10 @@ export function QuickApps() {
       title: 'MediaWiki',
       version: '1.41.0',
       description: 'The free and open-source wiki software that powers Wikipedia',
-      icon: <Book className="text-zinc-500" />,
+      icon: <Book className="text-muted-foreground" />,
       path: 'mediawiki/',
       progress: mediawikiProgress.progress,
-      colorClass: 'bg-zinc-600 hover:bg-zinc-700'
+      colorClass: 'bg-secondary hover:bg-secondary/80 text-foreground'
     },
     {
       id: 'codeigniter',

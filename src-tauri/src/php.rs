@@ -1,10 +1,10 @@
 use crate::downloader;
+use crate::settings;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use std::os::windows::process::CommandExt;
-use crate::settings;
 
 fn get_port() -> u16 {
     settings::get_settings().map(|s| s.php.port).unwrap_or(8080)
@@ -59,10 +59,7 @@ pub async fn fetch_versions() -> Result<Vec<PhpRelease>, String> {
         .map_err(|e| e.to_string())?;
 
     // Pattern: href="php-8.1.20-nts-Win32-vs16-x64.zip"
-    let re = Regex::new(
-        r#"href="(php-(\d+\.\d+\.\d+)-nts-Win32-[a-zA-Z0-9]+-x64\.zip)""#,
-    )
-    .unwrap();
+    let re = Regex::new(r#"href="(php-(\d+\.\d+\.\d+)-nts-Win32-[a-zA-Z0-9]+-x64\.zip)""#).unwrap();
 
     let mut seen = std::collections::HashSet::new();
     let mut releases: Vec<PhpRelease> = re
@@ -73,7 +70,10 @@ pub async fn fetch_versions() -> Result<Vec<PhpRelease>, String> {
             if seen.insert(version.clone()) {
                 Some(PhpRelease {
                     version,
-                    url: format!("https://downloads.php.net/~windows/releases/archives/{}", filename),
+                    url: format!(
+                        "https://downloads.php.net/~windows/releases/archives/{}",
+                        filename
+                    ),
                 })
             } else {
                 None
@@ -125,7 +125,10 @@ pub async fn install(app: &AppHandle, version: &str, url: &str) -> Result<String
     create_welcome_page()?;
 
     let _ = std::fs::remove_file(&zip_path);
-    Ok(format!("PHP {} installed to C:\\kythia\\bin\\php\\{}", version, version))
+    Ok(format!(
+        "PHP {} installed to C:\\kythia\\bin\\php\\{}",
+        version, version
+    ))
 }
 
 fn setup_php_ini(dest: &PathBuf) -> Result<(), String> {
@@ -144,7 +147,14 @@ fn setup_php_ini(dest: &PathBuf) -> Result<(), String> {
 
         // Uncomment common extensions
         for ext in &[
-            "curl", "fileinfo", "gd", "mbstring", "mysqli", "openssl", "pdo_mysql", "zip",
+            "curl",
+            "fileinfo",
+            "gd",
+            "mbstring",
+            "mysqli",
+            "openssl",
+            "pdo_mysql",
+            "zip",
         ] {
             let commented = format!(";extension={}", ext);
             let active = format!("extension={}", ext);
@@ -195,7 +205,10 @@ pub fn start(version: &str) -> Result<u32, String> {
     if is_running() {
         let port = get_port();
         if let Some((proc_name, pid)) = crate::downloader::get_conflicting_process(port) {
-            return Err(format!("Port {} is blocked by '{}' (PID: {}). Please stop it first.", port, proc_name, pid));
+            return Err(format!(
+                "Port {} is blocked by '{}' (PID: {}). Please stop it first.",
+                port, proc_name, pid
+            ));
         } else {
             return Err(format!("Port {} is already in use.", port));
         }
@@ -210,10 +223,7 @@ pub fn start(version: &str) -> Result<u32, String> {
     std::fs::create_dir_all(&www).map_err(|e| e.to_string())?;
 
     let child = std::process::Command::new(&exe)
-        .args([
-            "-b",
-            &format!("127.0.0.1:{}", get_port()),
-        ])
+        .args(["-b", &format!("127.0.0.1:{}", get_port())])
         .creation_flags(0x08000000)
         .spawn()
         .map_err(|e| format!("Failed to start PHP: {}", e))?;
@@ -247,9 +257,8 @@ pub fn stop(pid: Option<u32>) -> Result<(), String> {
 }
 
 pub fn cmp_versions(a: &str, b: &str) -> std::cmp::Ordering {
-    let parse = |s: &str| -> Vec<u32> {
-        s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect()
-    };
+    let parse =
+        |s: &str| -> Vec<u32> { s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect() };
     parse(a).cmp(&parse(b))
 }
 

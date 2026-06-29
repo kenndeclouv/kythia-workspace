@@ -97,7 +97,7 @@ export function Redis({ activeVersion, onVersionChange }: RedisProps = {}) {
                  </SelectTrigger>
                  <SelectContent>
                    {availableVersions.map((release) => (
-                     <SelectItem key={release.version} value={release.version}>
+                     <SelectItem key={release.version} value={release.version} label={`Redis ${release.version}`}>
                        Redis v{release.version}
                      </SelectItem>
                    ))}
@@ -138,13 +138,17 @@ export function Redis({ activeVersion, onVersionChange }: RedisProps = {}) {
                 <div>
                   <div className="flex items-center space-x-4 mb-1">
                     <h3 className="font-semibold">Global Environment</h3>
-                    <Select value={currentActiveVersion} onValueChange={(val) => val && onVersionChange?.(val)}>
+                    <Select 
+                      value={currentActiveVersion} 
+                      onValueChange={(val) => val && onVersionChange?.(val)}
+                      items={installedVersions.map(v => ({ value: v, label: `Redis v${v}` }))}
+                    >
                       <SelectTrigger className="w-[140px] h-8 text-sm">
                         <SelectValue placeholder="Version" />
                       </SelectTrigger>
                       <SelectContent>
                         {installedVersions.map(v => (
-                          <SelectItem key={v} value={v}>Redis v{v}</SelectItem>
+                          <SelectItem key={v} value={v} label={`Redis v${v}`}>Redis v{v}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

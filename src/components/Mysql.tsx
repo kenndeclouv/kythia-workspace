@@ -143,13 +143,18 @@ export function Mysql({ activeVersion, onVersionChange }: MysqlProps = {}) {
               <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Available Versions
               </label>
-              <Select disabled={isFetching || isInstalling} value={selectedVersion} onValueChange={(v) => v && setSelectedVersion(v)}>
+              <Select 
+                disabled={isFetching || isInstalling} 
+                value={selectedVersion} 
+                onValueChange={(v) => v && setSelectedVersion(v)}
+                items={releases.map(r => ({ value: r.version, label: `MySQL ${r.version}` }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={isFetching ? "Fetching versions..." : "Select version"} />
                 </SelectTrigger>
                 <SelectContent>
                   {releases.map(r => (
-                    <SelectItem key={r.version} value={r.version}>MySQL {r.version}</SelectItem>
+                    <SelectItem key={r.version} value={r.version} label={`MySQL ${r.version}`}>MySQL {r.version}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -188,13 +193,17 @@ export function Mysql({ activeVersion, onVersionChange }: MysqlProps = {}) {
                 <div>
                   <div className="flex items-center space-x-4 mb-1">
                     <h3 className="font-semibold">Global Environment</h3>
-                    <Select value={currentActiveVersion} onValueChange={(val) => val && onVersionChange?.(val)}>
+                    <Select 
+                      value={currentActiveVersion} 
+                      onValueChange={(val) => val && onVersionChange?.(val)}
+                      items={installedVersions.map(v => ({ value: v, label: `MySQL v${v}` }))}
+                    >
                       <SelectTrigger className="w-[140px] h-8 text-sm">
                         <SelectValue placeholder="Version" />
                       </SelectTrigger>
                       <SelectContent>
                         {installedVersions.map(v => (
-                          <SelectItem key={v} value={v}>MySQL v{v}</SelectItem>
+                          <SelectItem key={v} value={v} label={`MySQL v${v}`}>MySQL v{v}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

@@ -85,7 +85,7 @@ export function Logs() {
     } else if (lowerLine.includes('[warn]') || lowerLine.includes('warning:') || lowerLine.includes('notice:')) {
       return { text: line, level: 'warn', color: 'text-yellow-400' };
     } else {
-      return { text: line, level: 'info', color: 'text-zinc-300' };
+      return { text: line, level: 'info', color: 'text-foreground' };
     }
   };
 
@@ -106,26 +106,49 @@ export function Logs() {
           <h2 className="text-2xl font-bold">System Logs</h2>
         </div>
         <div className="flex items-center space-x-2">
-          <Select value={logLevel} onValueChange={(val) => val && setLogLevel(val as LogLevel)}>
+          <Select 
+            value={logLevel} 
+            onValueChange={(val) => val && setLogLevel(val as LogLevel)}
+            items={[
+              { value: 'all', label: 'All Levels' },
+              { value: 'error', label: 'Errors' },
+              { value: 'warn', label: 'Warnings' },
+              { value: 'info', label: 'Info' }
+            ]}
+          >
             <SelectTrigger className="w-32 h-9 border-border/50">
               <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Levels</SelectItem>
-              <SelectItem value="error">Errors</SelectItem>
-              <SelectItem value="warn">Warnings</SelectItem>
-              <SelectItem value="info">Info</SelectItem>
+              <SelectItem value="all" label="All Levels">All Levels</SelectItem>
+              <SelectItem value="error" label="Errors">Errors</SelectItem>
+              <SelectItem value="warn" label="Warnings">Warnings</SelectItem>
+              <SelectItem value="info" label="Info">Info</SelectItem>
             </SelectContent>
           </Select>
 
-          <Select value={activeTab} onValueChange={(val) => val && setActiveTab(val)}>
+          <Select 
+            value={activeTab} 
+            onValueChange={(val) => val && setActiveTab(val)}
+            items={[
+              { value: 'nginx', label: 'Nginx' },
+              { value: 'php', label: 'PHP-FPM' },
+              { value: 'mariadb', label: 'MariaDB' },
+              { value: 'mysql', label: 'MySQL' },
+              { value: 'postgres', label: 'PostgreSQL' },
+              { value: 'mongodb', label: 'MongoDB' },
+              { value: 'redis', label: 'Redis' },
+              { value: 'mailpit', label: 'Mailpit' },
+              { value: 'system', label: 'System' }
+            ]}
+          >
             <SelectTrigger className="w-40 h-9 border-border/50">
               <SelectValue placeholder="Select Service" />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(serviceNames).map(([key, name]) => (
-                <SelectItem key={key} value={key}>{name}</SelectItem>
+                <SelectItem key={key} value={key} label={name}>{name}</SelectItem>
               ))}
             </SelectContent>
           </Select>

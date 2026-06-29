@@ -151,13 +151,18 @@ export function Mail({ status, installedVersions, onStart, onStop, uiPort }: Mai
                 <label className="text-sm font-medium leading-none">
                   Available Versions
                 </label>
-                <Select disabled={isFetchingVersions || isInstalling} value={selectedVersion} onValueChange={(v) => v && setSelectedVersion(v)}>
+                <Select 
+                  disabled={isFetchingVersions || isInstalling} 
+                  value={selectedVersion} 
+                  onValueChange={(v) => v && setSelectedVersion(v)}
+                  items={releases.map(v => ({ value: v, label: `Mailpit ${v}` }))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={isFetchingVersions ? "Fetching versions..." : "Select version"} />
                   </SelectTrigger>
                   <SelectContent>
                     {releases.map(v => (
-                      <SelectItem key={v} value={v}>Mailpit {v}</SelectItem>
+                      <SelectItem key={v} value={v} label={`Mailpit ${v}`}>Mailpit {v}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

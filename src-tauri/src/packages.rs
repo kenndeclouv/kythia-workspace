@@ -54,7 +54,10 @@ pub async fn fetch_node_versions() -> Result<Vec<NodeRelease>, String> {
                     Some(serde_json::Value::String(_)) => true,
                     _ => false,
                 };
-                let url = format!("https://nodejs.org/dist/v{}/node-v{}-win-x64.zip", version, version);
+                let url = format!(
+                    "https://nodejs.org/dist/v{}/node-v{}-win-x64.zip",
+                    version, version
+                );
                 releases.push(NodeRelease { version, lts, url });
             }
         }
@@ -89,7 +92,7 @@ pub fn get_installed_node() -> Vec<String> {
 pub async fn install_node(app: AppHandle, version: String, url: String) -> Result<String, String> {
     let dl_dir = PathBuf::from("C:\\kythia\\downloads");
     fs::create_dir_all(&dl_dir).unwrap_or_default();
-    
+
     let zip_path = dl_dir.join(format!("node-{}.zip", version));
     downloader::download_file(&app, "node", &url, &zip_path).await?;
 
@@ -158,11 +161,15 @@ pub async fn fetch_bun_versions() -> Result<Vec<BunRelease>, String> {
 
     let mut releases = Vec::new();
     for release in json {
-        if let Some(asset) = release.assets.iter().find(|a| a.name == "bun-windows-x64.zip") {
+        if let Some(asset) = release
+            .assets
+            .iter()
+            .find(|a| a.name == "bun-windows-x64.zip")
+        {
             let version = release.tag_name.trim_start_matches("bun-v").to_string();
-            releases.push(BunRelease { 
-                version, 
-                url: asset.browser_download_url.clone() 
+            releases.push(BunRelease {
+                version,
+                url: asset.browser_download_url.clone(),
             });
         }
     }
@@ -195,7 +202,7 @@ pub fn get_installed_bun() -> Vec<String> {
 pub async fn install_bun(app: AppHandle, version: String, url: String) -> Result<String, String> {
     let dl_dir = PathBuf::from("C:\\kythia\\downloads");
     fs::create_dir_all(&dl_dir).unwrap_or_default();
-    
+
     let zip_path = dl_dir.join(format!("bun-{}.zip", version));
     downloader::download_file(&app, "bun", &url, &zip_path).await?;
 
@@ -236,14 +243,21 @@ pub fn get_installed_composer() -> Option<String> {
 pub async fn install_composer(app: AppHandle) -> Result<String, String> {
     let bin_dir = PathBuf::from("C:\\kythia\\bin\\composer");
     fs::create_dir_all(&bin_dir).unwrap_or_default();
-    
+
     let phar_path = bin_dir.join("composer.phar");
-    downloader::download_file(&app, "composer", "https://getcomposer.org/download/latest-stable/composer.phar", &phar_path).await?;
+    downloader::download_file(
+        &app,
+        "composer",
+        "https://getcomposer.org/download/latest-stable/composer.phar",
+        &phar_path,
+    )
+    .await?;
 
     // Create the wrapper bat script
     let bat_content = "@echo off\r\nphp \"%~dp0composer.phar\" %*\r\n";
     let bat_path = bin_dir.join("composer.bat");
-    fs::write(&bat_path, bat_content).map_err(|e| format!("Failed to write composer.bat: {}", e))?;
+    fs::write(&bat_path, bat_content)
+        .map_err(|e| format!("Failed to write composer.bat: {}", e))?;
 
     Ok("Composer installed successfully".to_string())
 }
@@ -265,9 +279,15 @@ pub fn get_installed_wp_cli() -> Option<String> {
 pub async fn install_wp_cli(app: AppHandle) -> Result<String, String> {
     let bin_dir = PathBuf::from("C:\\kythia\\bin\\wp-cli");
     fs::create_dir_all(&bin_dir).unwrap_or_default();
-    
+
     let phar_path = bin_dir.join("wp-cli.phar");
-    downloader::download_file(&app, "wp-cli", "https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar", &phar_path).await?;
+    downloader::download_file(
+        &app,
+        "wp-cli",
+        "https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar",
+        &phar_path,
+    )
+    .await?;
 
     let bat_content = "@echo off\r\nphp \"%~dp0wp-cli.phar\" %*\r\n";
     let bat_path = bin_dir.join("wp.bat");
@@ -310,11 +330,15 @@ pub async fn fetch_meilisearch_versions() -> Result<Vec<MeiliRelease>, String> {
 
     let mut releases = Vec::new();
     for release in json {
-        if let Some(asset) = release.assets.iter().find(|a| a.name == "meilisearch-windows-amd64.exe") {
+        if let Some(asset) = release
+            .assets
+            .iter()
+            .find(|a| a.name == "meilisearch-windows-amd64.exe")
+        {
             let version = release.tag_name.trim_start_matches("v").to_string();
-            releases.push(MeiliRelease { 
-                version, 
-                url: asset.browser_download_url.clone() 
+            releases.push(MeiliRelease {
+                version,
+                url: asset.browser_download_url.clone(),
             });
         }
     }
@@ -344,16 +368,20 @@ pub fn get_installed_meilisearch() -> Vec<String> {
 }
 
 #[tauri::command]
-pub async fn install_meilisearch(app: AppHandle, version: String, url: String) -> Result<String, String> {
+pub async fn install_meilisearch(
+    app: AppHandle,
+    version: String,
+    url: String,
+) -> Result<String, String> {
     let bin_dir = PathBuf::from("C:\\kythia\\bin\\meilisearch");
     let target_dir = bin_dir.join(&version);
-    
+
     if target_dir.exists() {
         let _ = fs::remove_dir_all(&target_dir);
     }
 
     fs::create_dir_all(&target_dir).unwrap_or_default();
-    
+
     let exe_path = target_dir.join("meilisearch.exe");
     downloader::download_file(&app, "meilisearch", &url, &exe_path).await?;
 
@@ -394,11 +422,15 @@ pub async fn fetch_deno_versions() -> Result<Vec<DenoRelease>, String> {
 
     let mut releases = Vec::new();
     for release in json {
-        if let Some(asset) = release.assets.iter().find(|a| a.name == "deno-x86_64-pc-windows-msvc.zip") {
+        if let Some(asset) = release
+            .assets
+            .iter()
+            .find(|a| a.name == "deno-x86_64-pc-windows-msvc.zip")
+        {
             let version = release.tag_name.trim_start_matches("v").to_string();
-            releases.push(DenoRelease { 
-                version, 
-                url: asset.browser_download_url.clone() 
+            releases.push(DenoRelease {
+                version,
+                url: asset.browser_download_url.clone(),
             });
         }
     }
@@ -431,7 +463,7 @@ pub fn get_installed_deno() -> Vec<String> {
 pub async fn install_deno(app: AppHandle, version: String, url: String) -> Result<String, String> {
     let dl_dir = PathBuf::from("C:\\kythia\\downloads");
     fs::create_dir_all(&dl_dir).unwrap_or_default();
-    
+
     let zip_path = dl_dir.join(format!("deno-{}.zip", version));
     downloader::download_file(&app, "deno", &url, &zip_path).await?;
 
@@ -442,7 +474,7 @@ pub async fn install_deno(app: AppHandle, version: String, url: String) -> Resul
     }
 
     fs::create_dir_all(&target_dir).unwrap_or_default();
-    
+
     downloader::extract_zip(&zip_path, &target_dir, false)?;
 
     Ok(format!("Deno {} installed successfully", version))
@@ -466,13 +498,19 @@ pub fn get_installed_pnpm() -> Option<String> {
 pub async fn install_pnpm(app: AppHandle) -> Result<String, String> {
     let dl_dir = PathBuf::from("C:\\kythia\\downloads");
     fs::create_dir_all(&dl_dir).unwrap_or_default();
-    
+
     let zip_path = dl_dir.join("pnpm-win32-x64.zip");
-    downloader::download_file(&app, "pnpm", "https://github.com/pnpm/pnpm/releases/latest/download/pnpm-win32-x64.zip", &zip_path).await?;
+    downloader::download_file(
+        &app,
+        "pnpm",
+        "https://github.com/pnpm/pnpm/releases/latest/download/pnpm-win32-x64.zip",
+        &zip_path,
+    )
+    .await?;
 
     let bin_dir = PathBuf::from("C:\\kythia\\bin\\pnpm");
     fs::create_dir_all(&bin_dir).unwrap_or_default();
-    
+
     downloader::extract_zip(&zip_path, &bin_dir, false)?;
 
     Ok("PNPM installed successfully".to_string())
@@ -496,9 +534,15 @@ pub fn get_installed_yarn() -> Option<String> {
 pub async fn install_yarn(app: AppHandle) -> Result<String, String> {
     let bin_dir = PathBuf::from("C:\\kythia\\bin\\yarn");
     fs::create_dir_all(&bin_dir).unwrap_or_default();
-    
+
     let js_path = bin_dir.join("yarn.js");
-    downloader::download_file(&app, "yarn", "https://github.com/yarnpkg/yarn/releases/download/v1.22.22/yarn-1.22.22.js", &js_path).await?;
+    downloader::download_file(
+        &app,
+        "yarn",
+        "https://github.com/yarnpkg/yarn/releases/download/v1.22.22/yarn-1.22.22.js",
+        &js_path,
+    )
+    .await?;
 
     let bat_content = "@echo off\r\nnode \"%~dp0yarn.js\" %*\r\n";
     let bat_path = bin_dir.join("yarn.bat");

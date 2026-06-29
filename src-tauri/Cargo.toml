@@ -1,8 +1,8 @@
 [package]
 name = "kythia-workspace"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.2.0"
+description = "The next generation, ultra lightweight local development environment. A faster, native, and isolated alternative to Laragon, Xampp, or Laravel Herd"
+authors = ["kenndeclouv"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -29,4 +29,8 @@ regex = "1"
 futures-util = "0.3"
 winreg = "0.56.0"
 tauri-plugin-autostart = "2.5.1"
+base64 = "0.22.1"
+chrono = "0.4.45"
+tauri-plugin-notification = "2"
+sysinfo = "0.39.5"
 

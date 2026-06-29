@@ -1,12 +1,14 @@
 use crate::downloader;
+use crate::settings;
 use serde::{Deserialize, Serialize};
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use std::os::windows::process::CommandExt;
-use crate::settings;
 
 fn get_port() -> u16 {
-    settings::get_settings().map(|s| s.mongodb.port).unwrap_or(27017)
+    settings::get_settings()
+        .map(|s| s.mongodb.port)
+        .unwrap_or(27017)
 }
 
 fn bin_dir() -> PathBuf {
@@ -41,17 +43,16 @@ pub fn is_initialized() -> bool {
 
 pub async fn fetch_versions() -> Result<Vec<MongodbRelease>, String> {
     let mut releases = Vec::new();
-    
-    let versions = vec![
-        "7.0.12",
-        "6.0.16",
-        "5.0.28",
-    ];
+
+    let versions = vec!["7.0.12", "6.0.16", "5.0.28"];
 
     for ver in versions {
         releases.push(MongodbRelease {
             version: ver.to_string(),
-            url: format!("https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-{}.zip", ver),
+            url: format!(
+                "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-{}.zip",
+                ver
+            ),
         });
     }
 
@@ -109,7 +110,10 @@ pub fn start(version: &str) -> Result<u32, String> {
     if is_running() {
         let port = get_port();
         if let Some((proc_name, pid)) = crate::downloader::get_conflicting_process(port) {
-            return Err(format!("Port {} is blocked by '{}' (PID: {}). Please stop it first.", port, proc_name, pid));
+            return Err(format!(
+                "Port {} is blocked by '{}' (PID: {}). Please stop it first.",
+                port, proc_name, pid
+            ));
         } else {
             return Err(format!("Port {} is already in use.", port));
         }
@@ -122,7 +126,7 @@ pub fn start(version: &str) -> Result<u32, String> {
 
     let data = data_dir();
     std::fs::create_dir_all(&data).map_err(|e| e.to_string())?;
-    
+
     let log_file = logs_dir().join("mongod.log");
 
     let child = std::process::Command::new(&mongod)
@@ -182,8 +186,7 @@ pub fn clear_logs() {
 }
 
 fn cmp_versions(a: &str, b: &str) -> std::cmp::Ordering {
-    let parse = |s: &str| -> Vec<u32> {
-        s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect()
-    };
+    let parse =
+        |s: &str| -> Vec<u32> { s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect() };
     parse(a).cmp(&parse(b))
 }

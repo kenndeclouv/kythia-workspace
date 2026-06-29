@@ -1,9 +1,9 @@
 use crate::downloader;
 use crate::settings;
 use serde::Deserialize;
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use std::os::windows::process::CommandExt;
 
 fn bin_dir() -> PathBuf {
     PathBuf::from("C:\\kythia\\bin\\mailpit")
@@ -87,12 +87,18 @@ pub async fn install(app: &AppHandle, version: &str) -> Result<String, String> {
         .build()
         .map_err(|e| e.to_string())?;
 
-    let url = format!("https://api.github.com/repos/axllent/mailpit/releases/tags/v{}", version);
+    let url = format!(
+        "https://api.github.com/repos/axllent/mailpit/releases/tags/v{}",
+        version
+    );
     let res = client.get(&url).send().await.map_err(|e| e.to_string())?;
-    
+
     let release: GitHubRelease = res.json().await.map_err(|e| e.to_string())?;
-    
-    let asset = release.assets.iter().find(|a| a.name == "mailpit-windows-amd64.zip")
+
+    let asset = release
+        .assets
+        .iter()
+        .find(|a| a.name == "mailpit-windows-amd64.zip")
         .ok_or_else(|| "Could not find mailpit-windows-amd64.zip for this release".to_string())?;
 
     let download_url = &asset.browser_download_url;
@@ -106,14 +112,19 @@ pub async fn install(app: &AppHandle, version: &str) -> Result<String, String> {
     downloader::extract_zip(&zip_path, &dest, false)?;
 
     let _ = std::fs::remove_file(&zip_path);
-    Ok(format!("Mailpit {} installed to C:\\kythia\\bin\\mailpit\\{}", version, version))
+    Ok(format!(
+        "Mailpit {} installed to C:\\kythia\\bin\\mailpit\\{}",
+        version, version
+    ))
 }
 
 pub fn start(version: &str) -> Result<(), String> {
     let s = settings::get_settings().unwrap_or_default();
-    
+
     if is_running() {
-        return Err("Mailpit ports are already in use. Stop the conflicting process first.".to_string());
+        return Err(
+            "Mailpit ports are already in use. Stop the conflicting process first.".to_string(),
+        );
     }
 
     let dir = bin_dir().join(version);

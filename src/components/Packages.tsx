@@ -153,9 +153,15 @@ export function Packages() {
       if (version && url) {
         await invoke(`install_${pkg}`, { version, url });
         toast.success(`${pkg} v${version} installed!`);
+        await invoke('add_xp', { amount: 15 }).catch(() => {});
+        window.dispatchEvent(new CustomEvent('unlock-achievement', { detail: { id: 'package_hoarder' } }));
+        window.dispatchEvent(new Event('gamification-update'));
       } else {
         await invoke(`install_${pkg}`);
         toast.success(`${pkg} installed!`);
+        await invoke('add_xp', { amount: 15 }).catch(() => {});
+        window.dispatchEvent(new CustomEvent('unlock-achievement', { detail: { id: 'package_hoarder' } }));
+        window.dispatchEvent(new Event('gamification-update'));
       }
       fetchInstalled();
     } catch (e: any) {
@@ -196,11 +202,15 @@ export function Packages() {
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Install New Version</h4>
             <div className="flex gap-2">
-              <Select value={selectedNodeVersion} onValueChange={(v) => v && setSelectedNodeVersion(v)}>
+              <Select 
+                value={selectedNodeVersion} 
+                onValueChange={(v) => v && setSelectedNodeVersion(v)}
+                items={nodeReleases.map(r => ({ value: r.version, label: r.version }))}
+              >
                 <SelectTrigger className="flex-1"><SelectValue placeholder="Select version" /></SelectTrigger>
                 <SelectContent>
                   {nodeReleases.map((r) => (
-                    <SelectItem key={r.version} value={r.version}>
+                    <SelectItem key={r.version} value={r.version} label={r.version}>
                       v{r.version} {r.lts && '(LTS)'} {installedNode.includes(r.version) && ' (Installed)'}
                     </SelectItem>
                   ))}
@@ -242,7 +252,11 @@ export function Packages() {
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Install New Version</h4>
             <div className="flex gap-2">
-              <Select value={selectedBunVersion} onValueChange={(v) => v && setSelectedBunVersion(v)}>
+              <Select 
+                value={selectedBunVersion} 
+                onValueChange={(v) => v && setSelectedBunVersion(v)}
+                items={bunReleases.map(r => ({ value: r.version, label: r.version }))}
+              >
                 <SelectTrigger className="flex-1"><SelectValue placeholder="Select version" /></SelectTrigger>
                 <SelectContent>
                   {bunReleases.map((r) => (
@@ -288,7 +302,11 @@ export function Packages() {
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Install New Version</h4>
             <div className="flex gap-2">
-              <Select value={selectedDenoVersion} onValueChange={(v) => v && setSelectedDenoVersion(v)}>
+              <Select 
+                value={selectedDenoVersion} 
+                onValueChange={(v) => v && setSelectedDenoVersion(v)}
+                items={denoReleases.map(r => ({ value: r.version, label: r.version }))}
+              >
                 <SelectTrigger className="flex-1"><SelectValue placeholder="Select version" /></SelectTrigger>
                 <SelectContent>
                   {denoReleases.map((r) => (
@@ -334,7 +352,11 @@ export function Packages() {
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Install New Version</h4>
             <div className="flex gap-2">
-              <Select value={selectedMeiliVersion} onValueChange={(v) => v && setSelectedMeiliVersion(v)}>
+              <Select 
+                value={selectedMeiliVersion} 
+                onValueChange={(v) => v && setSelectedMeiliVersion(v)}
+                items={meiliReleases.map(r => ({ value: r.version, label: r.version }))}
+              >
                 <SelectTrigger className="flex-1"><SelectValue placeholder="Select version" /></SelectTrigger>
                 <SelectContent>
                   {meiliReleases.map((r) => (

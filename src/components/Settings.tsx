@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Button } from './ui/button';
 import { Switch } from './ui/switch';
@@ -16,14 +16,38 @@ interface SettingsProps {
 export function Settings({ onSettingsSaved }: SettingsProps) {
   const { theme, setTheme } = useTheme();
   const [settings, setSettings] = useState<AppSettings | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [isClearingCache, setIsClearingCache] = useState(false);
   const [showLicense, setShowLicense] = useState(false);
   const [licenseKey, setLicenseKey] = useState('');
 
+  const isFirstLoad = useRef(true);
+
   useEffect(() => {
     loadSettings();
   }, []);
+
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      if (settings !== null) {
+        isFirstLoad.current = false;
+      }
+      return;
+    }
+
+    const autoSave = async () => {
+      if (!settings) return;
+      try {
+        await invoke('save_settings', { settings });
+        if (onSettingsSaved) onSettingsSaved();
+      } catch (e: any) {
+        toast.error(`Failed to auto-save settings: ${e}`);
+      }
+    };
+
+    const timeout = setTimeout(autoSave, 500);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings]);
 
   const loadSettings = async () => {
     try {
@@ -47,24 +71,25 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
     }
   };
 
-  const handleSave = async () => {
-    if (!settings) return;
-    setIsSaving(true);
-    try {
-      await invoke('save_settings', { settings });
-      toast.success('Settings saved successfully!');
-      if (onSettingsSaved) {
-        onSettingsSaved();
-      }
-    } catch (e: any) {
-      toast.error(`Failed to save settings: ${e}`);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleActivateLicense = (e: React.FormEvent) => {
+  const handleActivateLicense = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (licenseKey === 'KYTH-COIN-2705-GIFT') {
+      try {
+        await invoke('add_coins', { amount: 100 });
+        toast.success("Cheat Code Activated! +100 Coins", {
+          duration: 3000,
+          position: 'bottom-right',
+          icon: '✨'
+        });
+        window.dispatchEvent(new Event('gamification-update'));
+        setLicenseKey('');
+        return; // Don't close the modal so they can repeat it easily!
+      } catch (err) {
+        toast.error("Cheat failed.");
+      }
+    }
+
     if (licenseKey.trim().length > 0) {
       toast.success("Just kidding! Kythia is and always will be 100% free! 🎉", {
         duration: 5000,
@@ -123,9 +148,6 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
           <Button onClick={handleClearCache} disabled={isClearingCache} variant="outline" className="w-full sm:w-auto shadow-sm">
             {isClearingCache ? 'Clearing...' : 'Clear Cache'}
           </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto shadow-md">
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
         </div>
       </div>
 
@@ -141,14 +163,15 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
               <Select
                 value={theme}
                 onValueChange={(v) => setTheme(v as any)}
+                items={{ dark: 'Dark', light: 'Light', system: 'System' }}
               >
                 <SelectTrigger id="theme">
                   <SelectValue placeholder="Select theme" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="dark" label="Dark">Dark</SelectItem>
+                  <SelectItem value="light" label="Light">Light</SelectItem>
+                  <SelectItem value="system" label="System">System</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -342,6 +365,18 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
           <p className="text-sm text-muted-foreground mt-1">Configure how Kythia behaves in Windows.</p>
         </div>
         <div className="space-y-6">
+            <div className="flex items-center justify-between p-3 border border-border/50 bg-card/30 rounded-xl">
+              <div>
+                <Label htmlFor="native_notifications">OS Native Notifications</Label>
+                <div className="text-xs text-muted-foreground mt-1">Receive alerts directly in Windows/Mac notification center</div>
+              </div>
+              <Switch 
+                id="native_notifications" 
+                checked={settings.native_notifications} 
+                onCheckedChange={(c) => setSettings({...settings, native_notifications: c})}
+              />
+            </div>
+
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="autostart">Launch on Startup</Label>

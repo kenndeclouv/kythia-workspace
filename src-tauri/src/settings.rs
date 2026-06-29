@@ -55,6 +55,8 @@ pub struct AppSettings {
     pub autostart: bool,
     pub close_to_tray: bool,
     pub minimize_to_tray: bool,
+    #[serde(default = "default_true")]
+    pub native_notifications: bool,
     pub active_database_engine: String,
     pub active_php_version: Option<String>,
     pub active_mariadb_version: Option<String>,
@@ -66,25 +68,19 @@ pub struct AppSettings {
     pub ngrok_auth_token: Option<String>,
 }
 
+fn default_true() -> bool {
+    true
+}
+
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
             document_root: "C:\\kythia\\www".to_string(),
-            nginx: NginxSettings {
-                port: 80,
-            },
-            php: PhpSettings {
-                port: 8080,
-            },
-            mariadb: MariaDbSettings {
-                port: 3306,
-            },
-            postgres: PostgresSettings {
-                port: 5432,
-            },
-            mongodb: MongodbSettings {
-                port: 27017,
-            },
+            nginx: NginxSettings { port: 80 },
+            php: PhpSettings { port: 8080 },
+            mariadb: MariaDbSettings { port: 3306 },
+            postgres: PostgresSettings { port: 5432 },
+            mongodb: MongodbSettings { port: 27017 },
             redis: RedisSettings {
                 port: 6379,
                 user: None,
@@ -98,6 +94,7 @@ impl Default for AppSettings {
             autostart: false,
             close_to_tray: true,
             minimize_to_tray: false,
+            native_notifications: true,
             active_database_engine: "mysql".to_string(),
             active_php_version: None,
             active_mariadb_version: None,
@@ -105,7 +102,7 @@ impl Default for AppSettings {
             active_postgres_version: None,
             active_mongodb_version: None,
             active_redis_version: None,
-            local_domain: "test".to_string(),
+            local_domain: "kythia.test".to_string(),
             ngrok_auth_token: None,
         }
     }
@@ -122,7 +119,8 @@ pub fn get_settings() -> Result<AppSettings, String> {
         return Ok(AppSettings::default());
     }
 
-    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read settings: {}", e))?;
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read settings: {}", e))?;
     let settings: AppSettings = serde_json::from_str(&content).unwrap_or_default();
     Ok(settings)
 }
@@ -139,7 +137,7 @@ pub fn save_settings(app: AppHandle, settings: AppSettings) -> Result<(), String
 
     let content = serde_json::to_string_pretty(&settings)
         .map_err(|e| format!("Failed to serialize settings: {}", e))?;
-    
+
     fs::write(&path, content).map_err(|e| format!("Failed to write settings: {}", e))?;
 
     // Apply autostart logic

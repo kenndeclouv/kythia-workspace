@@ -118,13 +118,18 @@ export function Php({ activePhpVersion, onPhpVersionChange }: PhpProps) {
               <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Available Versions
               </label>
-              <Select disabled={isFetching || isInstalling} value={selectedVersion} onValueChange={(v) => v && setSelectedVersion(v)}>
+              <Select 
+                disabled={isFetching || isInstalling} 
+                value={selectedVersion} 
+                onValueChange={(v) => v && setSelectedVersion(v)}
+                items={releases.map(r => ({ value: r.version, label: `PHP ${r.version}` }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={isFetching ? "Fetching versions..." : "Select version"} />
                 </SelectTrigger>
                 <SelectContent>
                   {releases.map(r => (
-                    <SelectItem key={r.version} value={r.version}>PHP {r.version}</SelectItem>
+                    <SelectItem key={r.version} value={r.version} label={`PHP ${r.version}`}>PHP {r.version}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -156,13 +161,17 @@ export function Php({ activePhpVersion, onPhpVersionChange }: PhpProps) {
             <div>
               <div className="flex items-center space-x-4 mb-1">
                 <h2 className="text-2xl font-semibold tracking-tight">Global Environment</h2>
-                <Select value={currentActiveVersion} onValueChange={(val) => val && onPhpVersionChange(val)}>
+                <Select 
+                  value={currentActiveVersion} 
+                  onValueChange={(val) => val && onPhpVersionChange(val)}
+                  items={installedVersions.map(v => ({ value: v, label: `PHP ${v}` }))}
+                >
                   <SelectTrigger className="w-[140px] h-8 text-sm">
                     <SelectValue placeholder="Version" />
                   </SelectTrigger>
                   <SelectContent>
                     {installedVersions.map(v => (
-                      <SelectItem key={v} value={v}>PHP {v}</SelectItem>
+                      <SelectItem key={v} value={v} label={`PHP ${v}`}>PHP {v}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

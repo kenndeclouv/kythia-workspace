@@ -1,9 +1,9 @@
 use crate::downloader;
+use serde::{Deserialize, Serialize};
 use std::fs;
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use std::os::windows::process::CommandExt;
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RedisRelease {
@@ -12,7 +12,9 @@ pub struct RedisRelease {
 }
 
 fn get_port() -> u16 {
-    crate::settings::get_settings().map(|s| s.redis.port).unwrap_or(6379)
+    crate::settings::get_settings()
+        .map(|s| s.redis.port)
+        .unwrap_or(6379)
 }
 
 pub fn is_running() -> bool {
@@ -23,7 +25,10 @@ pub fn start(version: &str) -> Result<u32, String> {
     if is_running() {
         let port = get_port();
         if let Some((proc_name, pid)) = crate::downloader::get_conflicting_process(port) {
-            return Err(format!("Port {} is blocked by '{}' (PID: {}). Please stop it first.", port, proc_name, pid));
+            return Err(format!(
+                "Port {} is blocked by '{}' (PID: {}). Please stop it first.",
+                port, proc_name, pid
+            ));
         } else {
             return Err(format!("Port {} is already in use.", port));
         }
@@ -40,11 +45,11 @@ pub fn start(version: &str) -> Result<u32, String> {
     let conf_dir = PathBuf::from("C:\\kythia\\data\\redis");
     let _ = fs::create_dir_all(&conf_dir);
     let conf_path = conf_dir.join("redis.conf");
-    
+
     let settings = crate::settings::get_settings().unwrap_or_default();
     let port = settings.redis.port;
     let mut conf_content = format!("port {}\n", port);
-    
+
     if let Some(pass) = &settings.redis.password {
         if !pass.is_empty() {
             if let Some(user) = &settings.redis.user {
@@ -59,7 +64,7 @@ pub fn start(version: &str) -> Result<u32, String> {
             }
         }
     }
-    
+
     let _ = fs::write(&conf_path, conf_content);
 
     let child = std::process::Command::new(&redis_exe)
@@ -125,17 +130,17 @@ pub fn get_installed_redis() -> Vec<String> {
 pub async fn install_redis(app: AppHandle, version: String, url: String) -> Result<String, String> {
     let dl_dir = PathBuf::from("C:\\kythia\\downloads");
     fs::create_dir_all(&dl_dir).unwrap_or_default();
-    
+
     let zip_path = dl_dir.join(format!("redis-{}.zip", version));
     downloader::download_file(&app, "redis", &url, &zip_path).await?;
 
     let bin_dir = PathBuf::from("C:\\kythia\\bin\\redis");
     let target_dir = bin_dir.join(&version);
-    
+
     if target_dir.exists() {
         let _ = fs::remove_dir_all(&target_dir);
     }
-    
+
     fs::create_dir_all(&target_dir).map_err(|e| e.to_string())?;
 
     // The new MSYS2 redis zip has a top level folder, so we strip it
@@ -177,7 +182,9 @@ pub async fn fetch_versions() -> Result<Vec<RedisRelease>, String> {
                     for asset in assets {
                         if let Some(name) = asset.get("name").and_then(|n| n.as_str()) {
                             if name.ends_with("msys2.zip") {
-                                if let Some(url) = asset.get("browser_download_url").and_then(|u| u.as_str()) {
+                                if let Some(url) =
+                                    asset.get("browser_download_url").and_then(|u| u.as_str())
+                                {
                                     releases.push(RedisRelease {
                                         version: tag.to_string(),
                                         url: url.to_string(),
@@ -201,8 +208,7 @@ pub async fn fetch_versions() -> Result<Vec<RedisRelease>, String> {
 }
 
 pub fn cmp_versions(a: &str, b: &str) -> std::cmp::Ordering {
-    let parse = |s: &str| -> Vec<u32> {
-        s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect()
-    };
+    let parse =
+        |s: &str| -> Vec<u32> { s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect() };
     parse(a).cmp(&parse(b))
 }

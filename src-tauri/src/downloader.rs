@@ -1,9 +1,9 @@
 use futures_util::StreamExt;
 use serde::Serialize;
 use std::io::Write;
+use std::os::windows::process::CommandExt;
 use std::path::Path;
 use tauri::{AppHandle, Emitter};
-use std::os::windows::process::CommandExt;
 
 #[derive(Serialize, Clone, Debug)]
 pub struct DownloadProgress {
@@ -117,8 +117,7 @@ pub fn extract_zip(zip_path: &Path, dest: &Path, strip_top_dir: bool) -> Result<
             if let Some(parent) = out_path.parent() {
                 std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
             }
-            let mut out_file =
-                std::fs::File::create(&out_path).map_err(|e| e.to_string())?;
+            let mut out_file = std::fs::File::create(&out_path).map_err(|e| e.to_string())?;
             std::io::copy(&mut entry, &mut out_file).map_err(|e| e.to_string())?;
         }
     }
@@ -131,7 +130,8 @@ pub fn is_port_in_use(port: u16) -> bool {
     let timeout = std::time::Duration::from_millis(10);
     let v4 = std::net::SocketAddr::from(([127, 0, 0, 1], port));
     let v6 = std::net::SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 1], port));
-    std::net::TcpStream::connect_timeout(&v4, timeout).is_ok() || std::net::TcpStream::connect_timeout(&v6, timeout).is_ok()
+    std::net::TcpStream::connect_timeout(&v4, timeout).is_ok()
+        || std::net::TcpStream::connect_timeout(&v6, timeout).is_ok()
 }
 
 /// Identifies the process (name, PID) holding a specific port.
@@ -141,11 +141,11 @@ pub fn get_conflicting_process(port: u16) -> Option<(String, String)> {
         .creation_flags(0x08000000)
         .output()
         .ok()?;
-        
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     let port_str = format!(":{} ", port);
     let mut pid = None;
-    
+
     for line in stdout.lines() {
         if line.contains(&port_str) && line.contains("LISTENING") {
             let parts: Vec<&str> = line.split_whitespace().collect();
@@ -155,18 +155,22 @@ pub fn get_conflicting_process(port: u16) -> Option<(String, String)> {
             }
         }
     }
-    
+
     let pid = pid?;
-    
+
     let task_output = std::process::Command::new("tasklist")
         .args(["/FI", &format!("PID eq {}", pid), "/NH"])
         .creation_flags(0x08000000)
         .output()
         .ok()?;
-        
+
     let task_stdout = String::from_utf8_lossy(&task_output.stdout);
-    let proc_name = task_stdout.split_whitespace().next().unwrap_or("Unknown").to_string();
-    
+    let proc_name = task_stdout
+        .split_whitespace()
+        .next()
+        .unwrap_or("Unknown")
+        .to_string();
+
     Some((proc_name, pid))
 }
 
@@ -188,5 +192,8 @@ pub fn tail_file(path: &Path, n: usize) -> Vec<String> {
 
 /// Truncate a file to 0 bytes
 pub fn clear_file(path: &Path) {
-    let _ = std::fs::OpenOptions::new().write(true).truncate(true).open(path);
+    let _ = std::fs::OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(path);
 }

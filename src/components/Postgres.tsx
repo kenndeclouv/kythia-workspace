@@ -149,7 +149,7 @@ export function Postgres({ activeVersion, onVersionChange }: PostgresProps = {})
                 </SelectTrigger>
                 <SelectContent>
                   {releases.map(r => (
-                    <SelectItem key={r.version} value={r.version}>PostgreSQL {r.version}</SelectItem>
+                    <SelectItem key={r.version} value={r.version} label={`PostgreSQL ${r.version}`}>PostgreSQL {r.version}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -188,13 +188,17 @@ export function Postgres({ activeVersion, onVersionChange }: PostgresProps = {})
                 <div>
                   <div className="flex items-center space-x-4 mb-1">
                     <h3 className="font-semibold">Global Environment</h3>
-                    <Select value={currentActiveVersion} onValueChange={(val) => val && onVersionChange?.(val)}>
+                    <Select 
+                      value={currentActiveVersion} 
+                      onValueChange={(val) => val && onVersionChange?.(val)}
+                      items={installedVersions.map(v => ({ value: v, label: `PostgreSQL v${v}` }))}
+                    >
                       <SelectTrigger className="w-[140px] h-8 text-sm">
                         <SelectValue placeholder="Version" />
                       </SelectTrigger>
                       <SelectContent>
                         {installedVersions.map(v => (
-                          <SelectItem key={v} value={v}>PostgreSQL v{v}</SelectItem>
+                          <SelectItem key={v} value={v} label={`PostgreSQL v${v}`}>PostgreSQL v{v}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

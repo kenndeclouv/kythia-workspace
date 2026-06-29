@@ -1,6 +1,9 @@
-import { Play, Square, Activity, Server, Terminal, Database, HardDrive, Settings, Mail } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { Play, Square, Activity, Server, Terminal, Database, HardDrive, Settings, Mail, Rocket } from 'lucide-react';
 import { Button } from './ui/button';
-import { ServiceStatus } from '../types';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { ServiceStatus, SystemStats } from '../types';
 
 interface DashboardProps {
   statuses: {
@@ -33,6 +36,7 @@ function ServiceRow({
   name,
   engine,
   status,
+  stats,
   icon: Icon,
   onStart,
   onStop,
@@ -41,6 +45,7 @@ function ServiceRow({
   name: string,
   engine: string,
   status: ServiceStatus,
+  stats?: { memory: number; cpu: number },
   icon: any,
   onStart: () => void,
   onStop: () => void,
@@ -64,6 +69,17 @@ function ServiceRow({
           <span className={`text-sm ${status.running ? 'text-foreground' : 'text-muted-foreground'}`}>
             {status.running ? 'Running' : 'Stopped'}
           </span>
+        </div>
+
+        <div className="hidden md:flex flex-col items-end w-20 text-[10px] font-mono text-muted-foreground justify-center">
+          {status.running && stats ? (
+            <>
+              <span className="text-primary">{stats.cpu.toFixed(1)}% CPU</span>
+              <span className="text-blue-400">{(stats.memory / 1024 / 1024).toFixed(0)} MB</span>
+            </>
+          ) : (
+            <span className="opacity-0">-</span>
+          )}
         </div>
 
         <div className="hidden sm:flex items-center w-16 justify-end">
@@ -98,6 +114,37 @@ function ServiceRow({
 export function Dashboard({ statuses, activeDatabaseEngine, activeVersions, onStart, onStop, onStartAll, onStopAll, onConfigure }: DashboardProps) {
   const activeDbStatus = statuses[activeDatabaseEngine as 'mariadb' | 'mysql' | 'postgres' | 'mongodb'] || { running: false };
 
+  const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
+  const [sysStats, setSysStats] = useState<SystemStats | null>(null);
+
+  useEffect(() => {
+    const checkUpdate = async () => {
+      try {
+        const res = await fetch('https://api.github.com/repos/kenndeclouv/kythia-workspace/releases/latest');
+        if (!res.ok) return;
+        const data = await res.json();
+        const latestTag = data.tag_name;
+        const currentVersion = await invoke<string>('get_app_version');
+
+        let normalizedLatest = latestTag.startsWith('v') ? latestTag.slice(1) : latestTag;
+        if (normalizedLatest !== currentVersion && normalizedLatest > currentVersion) {
+          setUpdateAvailable(data.html_url);
+        }
+      } catch (e) { console.error(e); }
+    };
+    checkUpdate();
+
+    const pollStats = async () => {
+      try {
+        const stats = await invoke<SystemStats>('get_system_stats');
+        setSysStats(stats);
+      } catch (e) { console.error(e); }
+    };
+    pollStats();
+    const interval = setInterval(pollStats, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   const runningServices = [
     statuses.nginx.running,
     statuses.php.running,
@@ -110,6 +157,17 @@ export function Dashboard({ statuses, activeDatabaseEngine, activeVersions, onSt
 
   return (
     <div className="space-y-6 max-w-6xl w-full mx-auto">
+      {updateAvailable && (
+        <Alert className="bg-indigo-500/10 border-indigo-500/50 text-indigo-400">
+          <Rocket className="w-5 h-5 mr-2" />
+          <AlertTitle className="font-bold">Update Available!</AlertTitle>
+          <AlertDescription>
+            A new version of Kythia Workspace is available.
+            <a href={updateAvailable} target="_blank" rel="noreferrer" className="underline ml-1 font-bold hover:text-indigo-300 transition-colors">Download it here</a>.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Sleek Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-border/50">
         <div>
@@ -148,49 +206,90 @@ export function Dashboard({ statuses, activeDatabaseEngine, activeVersions, onSt
         </div>
       </div>
 
+      {sysStats && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-card/30 border border-border/50 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+              <Activity className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground font-semibold">CPU Usage</span>
+                <span className="text-foreground font-bold">{sysStats.cpu_usage.toFixed(1)}%</span>
+              </div>
+              <div className="h-2 bg-secondary/50 rounded-full overflow-hidden">
+                <div className="h-full bg-primary transition-all duration-500" style={{ width: `${Math.min(sysStats.cpu_usage, 100)}%` }} />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card/30 border border-border/50 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+              <HardDrive className="w-6 h-6 text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground font-semibold">RAM Usage</span>
+                <span className="text-foreground font-bold">
+                  {(sysStats.used_memory / 1024 / 1024 / 1024).toFixed(1)} GB / {(sysStats.total_memory / 1024 / 1024 / 1024).toFixed(1)} GB
+                </span>
+              </div>
+              <div className="h-2 bg-secondary/50 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${(sysStats.used_memory / sysStats.total_memory) * 100}%` }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Services List */}
       <div className="bg-card/30 backdrop-blur-md border border-border/50 rounded-xl overflow-hidden shadow-sm">
         <div className="flex flex-col">
           <ServiceRow
-            name="Web Server"
-            engine={activeVersions.nginx ? `Nginx v${activeVersions.nginx}` : 'Nginx'}
+            name="NGINX"
+            engine={activeVersions.nginx}
             status={statuses.nginx}
+            stats={sysStats?.services_usage['nginx']}
             icon={Server}
             onStart={() => onStart('nginx')}
             onStop={() => onStop('nginx')}
             onConfigure={() => onConfigure('nginx')}
           />
           <ServiceRow
-            name="PHP Engine"
-            engine={activeVersions.php ? `FastCGI v${activeVersions.php}` : 'FastCGI'}
+            name="PHP"
+            engine={activeVersions.php}
             status={statuses.php}
+            stats={sysStats?.services_usage['php']}
             icon={Terminal}
             onStart={() => onStart('php')}
             onStop={() => onStop('php')}
-            onConfigure={() => onConfigure('php-config')}
+            onConfigure={() => onConfigure('php')}
           />
           <ServiceRow
-            name="Database Engine"
-            engine={`${activeDatabaseEngine.charAt(0).toUpperCase() + activeDatabaseEngine.slice(1)}${activeVersions.database ? ` v${activeVersions.database}` : ''}`}
+            name={activeDatabaseEngine.charAt(0).toUpperCase() + activeDatabaseEngine.slice(1)}
+            engine={activeVersions.database}
             status={activeDbStatus}
+            stats={sysStats?.services_usage[activeDatabaseEngine]}
             icon={Database}
             onStart={() => onStart(activeDatabaseEngine as any)}
             onStop={() => onStop(activeDatabaseEngine as any)}
             onConfigure={() => onConfigure('database')}
           />
           <ServiceRow
-            name="In-Memory Store"
-            engine={activeVersions.redis ? `Redis v${activeVersions.redis}` : 'Redis'}
+            name="Redis"
+            engine={activeVersions.redis}
             status={statuses.redis}
+            stats={sysStats?.services_usage['redis']}
             icon={HardDrive}
             onStart={() => onStart('redis')}
             onStop={() => onStop('redis')}
             onConfigure={() => onConfigure('database')}
           />
           <ServiceRow
-            name="Mail Catcher"
-            engine={activeVersions.mailpit ? `Mailpit v${activeVersions.mailpit}` : 'Mailpit'}
+            name="Mailpit"
+            engine={activeVersions.mailpit}
             status={statuses.mailpit}
+            stats={sysStats?.services_usage['mailpit']}
             icon={Mail}
             onStart={() => onStart('mailpit')}
             onStop={() => onStop('mailpit')}

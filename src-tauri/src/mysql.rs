@@ -1,14 +1,16 @@
 use crate::downloader;
+use crate::settings;
 use serde::{Deserialize, Serialize};
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use std::os::windows::process::CommandExt;
-use crate::settings;
 
 fn get_port() -> u16 {
     // We use the mariadb port since they share the database port conceptually,
     // but the UI will ensure only one runs at a time.
-    settings::get_settings().map(|s| s.mariadb.port).unwrap_or(3306)
+    settings::get_settings()
+        .map(|s| s.mariadb.port)
+        .unwrap_or(3306)
 }
 
 fn bin_dir() -> PathBuf {
@@ -45,13 +47,9 @@ pub fn is_initialized() -> bool {
 /// Fetching dynamically from dev.mysql.com is complex due to bot protection.
 pub async fn fetch_versions() -> Result<Vec<MysqlRelease>, String> {
     let mut releases = Vec::new();
-    
+
     // Known stable MySQL 8.0 and 8.4 archive URLs
-    let versions = vec![
-        "8.4.0",
-        "8.0.37",
-        "8.0.36",
-    ];
+    let versions = vec!["8.4.0", "8.0.37", "8.0.36"];
 
     for ver in versions {
         let parts: Vec<&str> = ver.split('.').collect();
@@ -63,7 +61,10 @@ pub async fn fetch_versions() -> Result<Vec<MysqlRelease>, String> {
 
         releases.push(MysqlRelease {
             version: ver.to_string(),
-            url: format!("https://cdn.mysql.com/archives/mysql-{}/mysql-{}-winx64.zip", major_minor, ver),
+            url: format!(
+                "https://cdn.mysql.com/archives/mysql-{}/mysql-{}-winx64.zip",
+                major_minor, ver
+            ),
         });
     }
 
@@ -143,7 +144,10 @@ pub fn start(version: &str) -> Result<u32, String> {
     if is_running() {
         let port = get_port();
         if let Some((proc_name, pid)) = crate::downloader::get_conflicting_process(port) {
-            return Err(format!("Port {} is blocked by '{}' (PID: {}). Please stop it first.", port, proc_name, pid));
+            return Err(format!(
+                "Port {} is blocked by '{}' (PID: {}). Please stop it first.",
+                port, proc_name, pid
+            ));
         } else {
             return Err(format!("Port {} is already in use.", port));
         }
@@ -205,7 +209,10 @@ pub fn get_logs(lines: usize) -> Vec<String> {
     let log_path = data_dir().join("mysql.err");
     let mut out = downloader::tail_file(&log_path, lines);
     if out.is_empty() {
-        let alt_log_path = data_dir().join(format!("{}.err", std::env::var("COMPUTERNAME").unwrap_or_else(|_| "mysql".to_string())));
+        let alt_log_path = data_dir().join(format!(
+            "{}.err",
+            std::env::var("COMPUTERNAME").unwrap_or_else(|_| "mysql".to_string())
+        ));
         out = downloader::tail_file(&alt_log_path, lines);
     }
     if out.is_empty() {
@@ -217,14 +224,16 @@ pub fn get_logs(lines: usize) -> Vec<String> {
 pub fn clear_logs() {
     let log_path = data_dir().join("mysql.err");
     crate::downloader::clear_file(&log_path);
-    
-    let alt_log_path = data_dir().join(format!("{}.err", std::env::var("COMPUTERNAME").unwrap_or_else(|_| "mysql".to_string())));
+
+    let alt_log_path = data_dir().join(format!(
+        "{}.err",
+        std::env::var("COMPUTERNAME").unwrap_or_else(|_| "mysql".to_string())
+    ));
     crate::downloader::clear_file(&alt_log_path);
 }
 
 fn cmp_versions(a: &str, b: &str) -> std::cmp::Ordering {
-    let parse = |s: &str| -> Vec<u32> {
-        s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect()
-    };
+    let parse =
+        |s: &str| -> Vec<u32> { s.split(['.', '-']).filter_map(|n| n.parse().ok()).collect() };
     parse(a).cmp(&parse(b))
 }

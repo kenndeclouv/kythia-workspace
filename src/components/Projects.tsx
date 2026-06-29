@@ -156,8 +156,8 @@ const FRAMEWORKS: Framework[] = [
     name: 'Next.js',
     description: 'React framework with SSR & App Router',
     IconComponent: NextIcon,
-    iconBg: 'bg-zinc-800/80',
-    color: 'from-zinc-500/10 to-neutral-500/10 border-zinc-500/30',
+    iconBg: 'bg-secondary',
+    color: 'from-border/10 to-border/30 border-border/50',
     needsNode: true,
     templates: [
       { id: 'ts', label: 'Next.js + TypeScript', description: 'App Router, Tailwind, ESLint', badge: 'Recommended' },
@@ -218,8 +218,8 @@ const FRAMEWORKS: Framework[] = [
     name: 'Empty Folder',
     description: 'Just an empty project directory',
     IconComponent: ({ className }: { className?: string }) => <Folder className={className} />,
-    iconBg: 'bg-zinc-800/80',
-    color: 'from-zinc-500/10 to-slate-500/10 border-zinc-400/30',
+    iconBg: 'bg-secondary',
+    color: 'from-border/10 to-border/30 border-border/50',
     templates: [
       { id: 'default', label: 'Empty Folder', description: 'Creates an empty directory in your document root' },
     ],
@@ -309,13 +309,16 @@ export function Projects() {
       setOutputLines(prev => [...prev, { text: e.payload.line, isError: e.payload.is_error }]);
     });
 
-    const unlistenDone = await listen<{ success: boolean; message: string; path: string }>('project_done', (e) => {
+    const unlistenDone = await listen<{ success: boolean; message: string; path: string }>('project_done', async (e) => {
       setDoneSuccess(e.payload.success);
       setDoneMessage(e.payload.message);
       setDonePath(e.payload.path);
       setStep('done');
       if (e.payload.success) {
         toast.success(e.payload.message);
+        await invoke('add_coins', { amount: 10 }).catch(() => {});
+        window.dispatchEvent(new CustomEvent('unlock-achievement', { detail: { id: 'project_creator' } }));
+        window.dispatchEvent(new Event('gamification-update'));
       } else {
         toast.error(e.payload.message);
       }
@@ -532,8 +535,7 @@ export function Projects() {
             {outputLines.map((line, i) => (
               <div
                 key={i}
-                className={`whitespace-pre-wrap leading-relaxed ${line.isError ? 'text-red-400' : 'text-zinc-300'
-                  }`}
+                className={`whitespace-pre-wrap leading-relaxed ${line.isError ? 'text-red-500' : 'text-foreground'}`}
               >
                 {line.text}
               </div>

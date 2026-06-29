@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { ServiceStatus, AppSettings } from './types';
-import { Mail, ListTree, TerminalSquare, Power, Settings as SettingsIcon, Download, Globe, Play, Square, Circle } from 'lucide-react';
+import { AppSettings } from './types';
+import { TerminalSquare, Power, Settings as SettingsIcon, Download, Globe, Play, Square, Circle } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { ThemeProvider } from './components/theme-provider';
 
@@ -91,17 +91,24 @@ export function TrayApp() {
 
   const pollStatuses = async () => {
     try {
-      const [nginx, php, mariadb, mysql, postgres, mongodb, redis, mailpit] = await Promise.all([
-        invoke<ServiceStatus>('get_nginx_status'),
-        invoke<ServiceStatus>('get_php_status'),
-        invoke<ServiceStatus>('get_mariadb_status'),
-        invoke<ServiceStatus>('get_mysql_status'),
-        invoke<ServiceStatus>('get_postgres_status'),
-        invoke<ServiceStatus>('get_mongodb_status'),
-        invoke<ServiceStatus>('get_redis_status'),
-        invoke<ServiceStatus>('get_mailpit_status'),
-      ]);
-      setStatuses({ nginx, php, mariadb, mysql, postgres, mongodb, redis, mailpit });
+      const result = await invoke<any>('get_all_services_status');
+      const newStatuses = {
+        nginx: result.nginx,
+        php: result.php,
+        mariadb: result.mariadb,
+        mysql: result.mysql,
+        postgres: result.postgres,
+        mongodb: result.mongodb,
+        redis: result.redis,
+        mailpit: result.mailpit,
+      };
+      
+      setStatuses(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(newStatuses)) {
+          return prev;
+        }
+        return newStatuses;
+      });
     } catch (e) {
       // ignore
     }
@@ -200,29 +207,17 @@ export function TrayApp() {
           </div>
 
           <div className="flex flex-col mt-1">
-            <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => openMainWindow('mail')}>
-              <Mail className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">Mailpit</span>
-            </div>
-            <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => openMainWindow('quick-apps')}>
-              <ListTree className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">Quick Apps</span>
+            <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => openMainWindow('dashboard')}>
+              <Globe className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">Open Dashboard</span>
             </div>
             <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => openMainWindow('logs')}>
               <TerminalSquare className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">Log Viewer</span>
+              <span className="text-sm">View Logs</span>
             </div>
-          </div>
-
-          <div className="h-px bg-border my-2 mx-4" />
-
-          <div className="px-4 py-1">
-            <h2 className="text-xs font-semibold text-muted-foreground">Quick Access</h2>
-          </div>
-          <div className="flex flex-col mt-1">
-            <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => openMainWindow('sites')}>
-              <Globe className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">Sites</span>
+            <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => openMainWindow('packages')}>
+              <Download className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">Package Manager</span>
             </div>
           </div>
 
