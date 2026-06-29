@@ -50,6 +50,7 @@ Built completely from the ground up using **[Tauri v2](https://v2.tauri.app/)**,
 - **System Tray Integration**: Quietly runs in the background. Use the mini-tray app to toggle services quickly without opening the main dashboard.
 - **Smart Port Conflict Detection**: Never guess why MySQL won't start. Kythia scans for conflicting PIDs and notifies you if port 3306 or 80 is hijacked by another program (like Skype or Docker).
 - **Ngrok Tunnels**: Share your local `.test` projects to the world instantly via integrated Ngrok tunnels.
+- **Built-in Gamification**: Level up your developer profile! Earn XP and Kythia Coins by starting services, maintaining uptime, and unlocking achievements. Spend your coins in the Coin Store on custom themes, sound packs, and exclusive badges.
 
 ## Quick Start
 

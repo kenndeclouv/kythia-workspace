@@ -84,3 +84,14 @@ Need to show your local project to a client, or test a webhook from Stripe/GitHu
 2. Enter your Authtoken in Kythia's **Settings**.
 3. Go to the **Projects** tab, click on your project, and select **Share via Ngrok**.
 4. Kythia will generate a secure, public HTTPS URL that tunnels directly to your local `.test` domain!
+
+---
+
+## 7. Developer Gamification
+
+Kythia Workspace turns mundane local development into a rewarding experience!
+
+- **Earning XP & Coins**: Every time you start a service, maintain long uptimes, or unlock secret achievements, you earn XP (to level up) and Kythia Coins.
+- **The Coin Store**: Spend your hard-earned Coins on cosmetics to personalize your workspace. You can purchase gorgeous UI Themes, Sound Packs (which play epic sound effects when services boot up), and Title Badges.
+- **Achievements**: Unlock special milestones like *Night Owl* (coding between midnight and 4 AM) or *The Architect* (running Nginx, PHP, and a Database simultaneously).
+- **Profile Management**: Track your leveling progress, equip or unequip your purchased items, and manage your developer avatar in the Profile tab.
