@@ -94,8 +94,8 @@ Kythia is designed to keep your system clean. All data is isolated:
 ## Comprehensive Documentation
 
 To truly master Kythia Workspace, please read the official documentation:
-- [Architecture Details](docs/architecture.md) - Deep dive into how Rust handles process orchestration and IPC.
-- [Usage Guide](docs/usage.md) - Step-by-step instructions on setting up domains, configuring ports, and reading logs.
+- [Architecture Details](docs/ARCHITECTURE.md) - Deep dive into how Rust handles process orchestration and IPC.
+- [Usage Guide](docs/USAGE.md) - Step-by-step instructions on setting up domains, configuring ports, and reading logs.
 - [Contributing](CONTRIBUTING.md) - Learn how to build Kythia locally and contribute back to the project.
 
 ## Contributing
