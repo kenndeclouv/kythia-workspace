@@ -26,6 +26,10 @@
   </a>
 </p>
 
+<p align="center">
+  <img src="docs/images/dashboard.webp" alt="Kythia Workspace Dashboard" width="800">
+</p>
+
 ---
 
 ## What is Kythia Workspace?

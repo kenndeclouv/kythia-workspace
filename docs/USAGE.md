@@ -14,7 +14,18 @@ When you open Kythia Workspace for the first time, your dashboard will be mostly
 3. Kythia fetches the latest available versions directly from their official sources.
 4. Click **Install** on the versions you need. Kythia will download and securely extract them into its isolated directory, keeping your Windows Registry clean.
 
+![Web Server Services](images/web-server.webp)
+
+![PHP Services](images/php.webp)
+
+![Database Services](images/database.webp)
+
+![Mail Services](images/mail.webp)
+
 ### 1.2 Managing Ports & Settings
+
+![Settings](images/settings.webp)
+
 Before starting services, you may want to ensure the default ports don't conflict with existing applications.
 - Click the **Settings** gear icon.
 - Here you can customize:
@@ -23,9 +34,13 @@ Before starting services, you may want to ensure the default ports don't conflic
   - **Service Ports**: Change default ports (e.g., move Nginx from `80` to `8080`, or MySQL from `3306` to `3307`).
   - **Autostart**: Toggle whether Kythia should start automatically when Windows boots.
 
+![PHP INI Settings](images/php-ini.webp)
+
 ---
 
 ## 2. Operating Services
+
+![Dashboard](images/dashboard.webp)
 
 ### 2.1 Starting and Stopping
 - From the main dashboard, you can start individual services using the Play/Stop buttons next to them.
@@ -41,6 +56,8 @@ If you attempt to start a service and the port is already in use, Kythia will tr
 ## 3. Projects & Pretty URLs
 
 Kythia handles complex Nginx virtual hosting and DNS spoofing for you automatically.
+
+![Projects](images/projects.webp)
 
 ### 3.1 Adding a Project
 1. Move your web project folder into your Document Root (e.g., `C:\kythia\www\my-laravel-app`).
@@ -60,6 +77,8 @@ Make sure Nginx (and PHP, if applicable) are running, then simply open your brow
 
 Kythia is designed to live in the background without disturbing your workflow.
 
+![System Tray](images/tray.webp)
+
 - **Closing the App**: By default, clicking the "X" on the main window does not kill your services. It minimizes Kythia to the System Tray.
 - **Left-Click Tray Icon**: Opens a lightning-fast "Mini Dashboard" where you can quickly toggle services without loading the full UI.
 - **Right-Click Tray Icon**: Provides a context menu with options to **Start All**, **Stop All**, or **Quit** (which will safely terminate all running processes and exit the application).
@@ -67,6 +86,8 @@ Kythia is designed to live in the background without disturbing your workflow.
 ---
 
 ## 5. Debugging & Logs
+
+![Logs](images/logs.webp)
 
 When things go wrong (e.g., a database connection fails, or Nginx throws a 502 Bad Gateway), logs are your best friend.
 
@@ -77,6 +98,8 @@ When things go wrong (e.g., a database connection fails, or Nginx throws a 502 B
 ---
 
 ## 6. Sharing with the World (Ngrok)
+
+![Sites & Ngrok](images/sites.webp)
 
 Need to show your local project to a client, or test a webhook from Stripe/GitHub? Kythia has native Ngrok integration.
 
@@ -91,7 +114,14 @@ Need to show your local project to a client, or test a webhook from Stripe/GitHu
 
 Kythia Workspace turns mundane local development into a rewarding experience!
 
+![Dashboard Achievement](images/dashboard-achievement.webp)
+
 - **Earning XP & Coins**: Every time you start a service, maintain long uptimes, or unlock secret achievements, you earn XP (to level up) and Kythia Coins.
 - **The Coin Store**: Spend your hard-earned Coins on cosmetics to personalize your workspace. You can purchase gorgeous UI Themes, Sound Packs (which play epic sound effects when services boot up), and Title Badges.
+
+![Coin Shop](images/coin-shop.webp)
+
 - **Achievements**: Unlock special milestones like *Night Owl* (coding between midnight and 4 AM) or *The Architect* (running Nginx, PHP, and a Database simultaneously).
 - **Profile Management**: Track your leveling progress, equip or unequip your purchased items, and manage your developer avatar in the Profile tab.
+
+![Profile](images/profile.webp)
