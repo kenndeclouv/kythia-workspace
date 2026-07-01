@@ -11,7 +11,7 @@ import { AppSettings } from '../types';
 import { useTheme } from './theme-provider';
 
 interface SettingsProps {
-  onSettingsSaved?: () => void;
+  onSettingsSaved?: (needsRestart: boolean) => void;
 }
 
 export function Settings({ onSettingsSaved }: SettingsProps) {
@@ -22,6 +22,20 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
   const [licenseKey, setLicenseKey] = useState('');
 
   const isFirstLoad = useRef(true);
+  const lastSavedServiceSettings = useRef<string>('');
+
+  const getServiceSettings = (s: AppSettings) => ({
+    document_root: s.document_root,
+    local_domain: s.local_domain,
+    nginx: s.nginx,
+    php: s.php,
+    mariadb: s.mariadb,
+    mysql: s.mysql,
+    postgres: s.postgres,
+    mongodb: s.mongodb,
+    redis: s.redis,
+    mailpit: s.mailpit,
+  });
 
   useEffect(() => {
     loadSettings();
@@ -38,8 +52,12 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
     const autoSave = async () => {
       if (!settings) return;
       try {
+        const currentServiceSettings = JSON.stringify(getServiceSettings(settings));
+        const needsRestart = currentServiceSettings !== lastSavedServiceSettings.current;
+        lastSavedServiceSettings.current = currentServiceSettings;
+
         await invoke('save_settings', { settings });
-        if (onSettingsSaved) onSettingsSaved();
+        if (onSettingsSaved) onSettingsSaved(needsRestart);
       } catch (e: any) {
         toast.error(`Failed to auto-save settings: ${e}`);
       }
@@ -54,6 +72,7 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
     try {
       const s = await invoke<AppSettings>('get_settings');
       setSettings(s);
+      lastSavedServiceSettings.current = JSON.stringify(getServiceSettings(s));
     } catch (e) {
       toast.error('Failed to load settings');
     }

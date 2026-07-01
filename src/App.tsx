@@ -87,11 +87,11 @@ interface PortConflict {
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
-    return localStorage.getItem('kythia-active-tab') || 'dashboard';
+    return sessionStorage.getItem('kythia-active-tab') || 'dashboard';
   });
 
   useEffect(() => {
-    localStorage.setItem('kythia-active-tab', activeTab);
+    sessionStorage.setItem('kythia-active-tab', activeTab);
   }, [activeTab]);
   const [portConflicts, setPortConflicts] = useState<PortConflict[]>([]);
   
@@ -397,7 +397,7 @@ function App() {
     await Promise.all(promises);
   };
 
-  const handleSettingsSaved = async () => {
+  const handleSettingsSaved = async (needsRestart: boolean = false) => {
     // Record which services were running
     const running = {
       nginx: statuses.nginx.running,
@@ -411,38 +411,14 @@ function App() {
     };
 
     const hasRunning = Object.values(running).some(Boolean);
-    if (!hasRunning) return;
-
-    toast.info('Applying settings and restarting services...');
     
-    // Stop all running services
-    const stopPromises = [];
-    if (running.nginx) stopPromises.push(handleStop('nginx'));
-    if (running.php) stopPromises.push(handleStop('php'));
-    if (running.mariadb) stopPromises.push(handleStop('mariadb'));
-    if (running.mysql) stopPromises.push(handleStop('mysql'));
-    if (running.postgres) stopPromises.push(handleStop('postgres'));
-    if (running.mongodb) stopPromises.push(handleStop('mongodb'));
-    if (running.redis) stopPromises.push(handleStop('redis'));
-    if (running.mailpit) stopPromises.push(handleStop('mailpit'));
-    
-    await Promise.all(stopPromises);
-
-    // Wait a brief moment for ports to clear
-    setTimeout(async () => {
-      const startPromises = [];
-      if (running.nginx) startPromises.push(handleStart('nginx'));
-      if (running.php) startPromises.push(handleStart('php'));
-      if (running.mariadb) startPromises.push(handleStart('mariadb'));
-      if (running.mysql) startPromises.push(handleStart('mysql'));
-      if (running.postgres) startPromises.push(handleStart('postgres'));
-      if (running.mongodb) startPromises.push(handleStart('mongodb'));
-      if (running.redis) startPromises.push(handleStart('redis'));
-      if (running.mailpit) startPromises.push(handleStart('mailpit'));
-      
-      await Promise.all(startPromises);
-      toast.success('Services restarted with new settings');
-    }, 1500);
+    if (needsRestart && hasRunning) {
+      toast.info('Settings saved. Please restart running services to apply changes.', {
+        duration: 5000,
+      });
+    } else {
+      toast.success('Settings saved successfully');
+    }
   };
 
   const handleEngineChange = async (engine: string) => {

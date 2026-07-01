@@ -29,17 +29,21 @@ export function TrayApp() {
     mailpit: [],
   });
 
-  const [isFocused, setIsFocused] = useState(true);
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     const appWindow = getCurrentWindow();
-    let unlistenFocus: () => void;
+    let unlistenFocus: (() => void) | undefined;
 
-    appWindow.onFocusChanged(({ payload: focused }) => {
+    const setup = async () => {
+      const focused = await appWindow.isFocused();
       setIsFocused(focused);
-    }).then(fn => {
-      unlistenFocus = fn;
-    });
+      
+      unlistenFocus = await appWindow.onFocusChanged(({ payload: focused }) => {
+        setIsFocused(focused);
+      });
+    };
+    setup();
 
     return () => {
       if (unlistenFocus) unlistenFocus();

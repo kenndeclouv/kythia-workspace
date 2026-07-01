@@ -21,10 +21,10 @@ pub struct SystemStats {
 }
 
 #[tauri::command]
-pub fn get_system_stats(state: State<'_, SysState>) -> SystemStats {
+pub async fn get_system_stats(state: State<'_, SysState>) -> Result<SystemStats, ()> {
     let mut sys = state.0.lock().unwrap();
     sys.refresh_all();
-    
+
     let cpu_usage = sys.global_cpu_usage();
     let total_memory = sys.total_memory();
     let used_memory = sys.used_memory();
@@ -62,10 +62,10 @@ pub fn get_system_stats(state: State<'_, SysState>) -> SystemStats {
         }
     }
     
-    SystemStats {
+    Ok(SystemStats {
         total_memory,
         used_memory,
         cpu_usage,
         services_usage,
-    }
+    })
 }

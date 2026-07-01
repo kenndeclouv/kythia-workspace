@@ -61,6 +61,10 @@ fn check_port_conflicts() -> Vec<PortConflict> {
     ];
 
     for (service, port) in checks {
+        if !downloader::is_port_in_use(port) {
+            continue;
+        }
+
         if let Some((proc_name, pid)) = downloader::get_conflicting_process(port) {
             let lower_proc = proc_name.to_lowercase();
             if lower_proc.contains("nginx")
@@ -611,8 +615,8 @@ pub struct AllServicesStatus {
 }
 
 #[tauri::command]
-fn get_all_services_status(state: State<'_, AppState>) -> AllServicesStatus {
-    AllServicesStatus {
+async fn get_all_services_status(state: State<'_, AppState>) -> Result<AllServicesStatus, ()> {
+    Ok(AllServicesStatus {
         nginx: get_nginx_status(state.clone()),
         php: get_php_status(state.clone()),
         mariadb: get_mariadb_status(state.clone()),
@@ -622,7 +626,7 @@ fn get_all_services_status(state: State<'_, AppState>) -> AllServicesStatus {
         redis: get_redis_status(state.clone()),
         mailpit: get_mailpit_status(state.clone()),
         conflicts: check_port_conflicts(),
-    }
+    })
 }
 
 // ────────────────────────────────────────────────────────────────
