@@ -7,12 +7,12 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from './components/ui/s
 import { TooltipProvider } from './components/ui/tooltip';
 import { AppSettings } from './types';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle, Trophy, Rocket } from 'lucide-react';
 import { ThemeProvider } from './components/theme-provider';
-import { AlertTriangle, Trophy, Rocket } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 import { GamificationBadge } from './components/GamificationBadge';
 import loadingAnimation from "./assets/loading-animation.webp";
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Intercept all toast calls to forward to OS Native Notification if enabled
 const originalSuccess = toast.success;
@@ -86,13 +86,6 @@ interface PortConflict {
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(() => {
-    return sessionStorage.getItem('kythia-active-tab') || 'dashboard';
-  });
-
-  useEffect(() => {
-    sessionStorage.setItem('kythia-active-tab', activeTab);
-  }, [activeTab]);
   const [portConflicts, setPortConflicts] = useState<PortConflict[]>([]);
   
   const [statuses, setStatuses] = useState({
@@ -133,7 +126,7 @@ function App() {
     let unlisten: (() => void) | undefined;
     import('@tauri-apps/api/event').then(({ listen }) => {
       listen<string>('navigate', (e) => {
-        setActiveTab(e.payload);
+        window.location.hash = `/${e.payload}`;
       }).then(f => {
         unlisten = f;
       });
@@ -480,7 +473,7 @@ function App() {
       <TooltipProvider>
         <SidebarProvider>
           <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
-            <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            <Sidebar />
             
             <SidebarInset className="flex-1 flex flex-col overflow-hidden bg-background relative">
               {/* Background is handled by styles.css body — no duplicate divs needed */}
@@ -506,73 +499,84 @@ function App() {
                 )}
 
                 <Suspense fallback={<PageSpinner />}>
-                  {activeTab === 'dashboard' && settings && (() => {
-                    const activeVersions = {
-                      nginx: getVersionToStart('nginx') || '',
-                      php: getVersionToStart('php') || '',
-                      database: getVersionToStart(settings.active_database_engine as any) || '',
-                      redis: getVersionToStart('redis') || '',
-                      mailpit: getVersionToStart('mailpit') || '',
-                    };
-                    return (
-                      <Dashboard 
-                        statuses={statuses} 
-                        activeDatabaseEngine={settings.active_database_engine}
-                        activeVersions={activeVersions}
-                        onStart={handleStart} 
-                        onStop={handleStop} 
-                        onConfigure={(tab) => setActiveTab(tab)}
-                        onStartAll={handleStartAll}
-                        onStopAll={handleStopAll}
-                        onEngineChange={handleEngineChange}
+                  <Routes>
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={
+                      settings && (() => {
+                        const activeVersions = {
+                          nginx: getVersionToStart('nginx') || '',
+                          php: getVersionToStart('php') || '',
+                          database: getVersionToStart(settings.active_database_engine as any) || '',
+                          redis: getVersionToStart('redis') || '',
+                          mailpit: getVersionToStart('mailpit') || '',
+                        };
+                        return (
+                          <Dashboard 
+                            statuses={statuses} 
+                            activeDatabaseEngine={settings.active_database_engine}
+                            activeVersions={activeVersions}
+                            onStart={handleStart} 
+                            onStop={handleStop} 
+                            onConfigure={(tab) => { window.location.hash = `/${tab}`; }}
+                            onStartAll={handleStartAll}
+                            onStopAll={handleStopAll}
+                            onEngineChange={handleEngineChange}
+                          />
+                        );
+                      })()
+                    } />
+                    <Route path="/nginx" element={<Nginx />} />
+                    <Route path="/php" element={
+                      settings && (
+                        <Php 
+                          activePhpVersion={settings?.active_php_version || ''}
+                          onPhpVersionChange={handlePhpVersionChange}
+                        />
+                      )
+                    } />
+                    <Route path="/php-config" element={
+                      <PhpConfig
+                        activePhpVersion={settings?.active_php_version || ''}
+                        installedVersions={installedVersions.php}
+                        onPhpVersionChange={handlePhpVersionChange}
                       />
-                    );
-                  })()}
-                  {activeTab === 'nginx' && <Nginx />}
-                  {activeTab === 'php' && settings && (
-                    <Php 
-                      activePhpVersion={settings?.active_php_version || ''}
-                      onPhpVersionChange={handlePhpVersionChange}
-                    />
-                  )}
-                  {activeTab === 'php-config' && (
-                    <PhpConfig
-                      activePhpVersion={settings?.active_php_version || ''}
-                      installedVersions={installedVersions.php}
-                      onPhpVersionChange={handlePhpVersionChange}
-                    />
-                  )}
-                  {activeTab === 'database' && settings && (
-                    <DatabaseManager 
-                      activeEngine={settings.active_database_engine}
-                      onEngineChange={handleEngineChange}
-                      activeMariaDbVersion={settings.active_mariadb_version}
-                      activeMysqlVersion={settings.active_mysql_version}
-                      activePostgresVersion={settings.active_postgres_version}
-                      activeMongodbVersion={settings.active_mongodb_version}
-                      activeRedisVersion={settings.active_redis_version}
-                      onActiveVersionChange={(service, version) => handleActiveVersionChange(service as any, version)}
-                    />
-                  )}
-                  {activeTab === 'packages' && <Packages />}
-                  {activeTab === 'sites' && <Sites />}
-                  {activeTab === 'quick-apps' && <QuickApps />}
-                  {activeTab === 'mail' && settings && (
-                    <Mail 
-                      status={statuses.mailpit}
-                      installedVersions={installedVersions.mailpit}
-                      onStart={() => handleStart('mailpit')}
-                      onStop={() => handleStop('mailpit')}
-                      uiPort={settings.mailpit?.ui_port || 8025}
-                    />
-                  )}
-                  {activeTab === 'logs' && <Logs />}
-                  {activeTab === 'settings' && <Settings onSettingsSaved={handleSettingsSaved} />}
-                  {activeTab === 'about' && <About />}
-                  {activeTab === 'projects' && <Projects />}
-                  {activeTab === 'achievements' && <Achievements />}
-                  {activeTab === 'shop' && <Shop />}
-                  {activeTab === 'profile' && <Profile />}
+                    } />
+                    <Route path="/database" element={
+                      settings && (
+                        <DatabaseManager 
+                          activeEngine={settings.active_database_engine}
+                          onEngineChange={handleEngineChange}
+                          activeMariaDbVersion={settings.active_mariadb_version}
+                          activeMysqlVersion={settings.active_mysql_version}
+                          activePostgresVersion={settings.active_postgres_version}
+                          activeMongodbVersion={settings.active_mongodb_version}
+                          activeRedisVersion={settings.active_redis_version}
+                          onActiveVersionChange={(service, version) => handleActiveVersionChange(service as any, version)}
+                        />
+                      )
+                    } />
+                    <Route path="/packages" element={<Packages />} />
+                    <Route path="/sites" element={<Sites />} />
+                    <Route path="/quick-apps" element={<QuickApps />} />
+                    <Route path="/mail" element={
+                      settings && (
+                        <Mail 
+                          status={statuses.mailpit}
+                          installedVersions={installedVersions.mailpit}
+                          onStart={() => handleStart('mailpit')}
+                          onStop={() => handleStop('mailpit')}
+                          uiPort={settings.mailpit?.ui_port || 8025}
+                        />
+                      )
+                    } />
+                    <Route path="/logs" element={<Logs />} />
+                    <Route path="/settings" element={<Settings onSettingsSaved={handleSettingsSaved} />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/projects" element={<Projects />} />
+                    <Route path="/achievements" element={<Achievements />} />
+                    <Route path="/shop" element={<Shop />} />
+                    <Route path="/profile" element={<Profile />} />
+                  </Routes>
                 </Suspense>
         </main>
         </SidebarInset>

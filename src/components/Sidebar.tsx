@@ -13,12 +13,12 @@ import {
 import { useGamification } from '../hooks/useGamification';
 import { SHOP_ITEMS } from '../lib/shop';
 
-interface SidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}
+import { useLocation, useNavigate } from 'react-router-dom';
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const activeTab = location.pathname.substring(1) || 'dashboard';
   const { data } = useGamification();
 
   const activeBadge = SHOP_ITEMS.find(item => item.type === 'badge' && item.id === data?.active_badge);
@@ -59,7 +59,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
                   isActive={activeTab === item.id}
-                  onClick={() => onTabChange(item.id)}
+                  onClick={() => navigate(`/${item.id}`)}
                   tooltip={item.label}
                   className="py-5"
                 >
@@ -72,7 +72,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={activeTab === 'settings'}
-                onClick={() => onTabChange('settings')}
+                onClick={() => navigate('/settings')}
                 tooltip="Settings"
                 className="py-5"
               >
@@ -93,7 +93,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               isActive={activeTab === 'achievements'}
-              onClick={() => onTabChange('achievements')}
+              onClick={() => navigate('/achievements')}
               tooltip="Achievements"
               className="py-5"
             >
@@ -104,7 +104,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               isActive={activeTab === 'shop'}
-              onClick={() => onTabChange('shop')}
+              onClick={() => navigate('/shop')}
               tooltip="Coin Store"
               className="py-5"
             >
@@ -121,7 +121,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               isActive={activeTab === 'profile'}
-              onClick={() => onTabChange('profile')}
+              onClick={() => navigate('/profile')}
               className="py-2 h-auto flex items-center gap-3 bg-secondary/30 border border-border/50 hover:border-primary/50 transition-colors"
             >
               <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-primary/20 bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">

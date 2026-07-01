@@ -48,11 +48,13 @@ const wrapIcon = (icon: any) => {
   return originalWarning(msg, newData);
 };
 
+import { HashRouter } from 'react-router-dom';
+
 const isTray = window.location.search.includes('tray=true');
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    {isTray ? <TrayApp /> : <App />}
+    {isTray ? <TrayApp /> : <HashRouter><App /></HashRouter>}
     <Toaster position="top-center" />
   </React.StrictMode>,
 )
