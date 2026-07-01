@@ -1,6 +1,6 @@
 [package]
 name = "kythia-workspace"
-version = "0.2.0"
+version = "0.3.0"
 description = "The next generation, ultra lightweight local development environment. A faster, native, and isolated alternative to Laragon, Xampp, or Laravel Herd"
 authors = ["kenndeclouv"]
 edition = "2021"
