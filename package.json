@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
+  "author": {
+    "name": "kenndeclouv",
+    "email": "me@kenndeclouv.com"
+  },
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -41,5 +46,25 @@
     "tailwindcss": "^4.3.1",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"
-  }
+  },
+  "keywords": [
+    "kythia",
+    "kenndeclouv",
+    "windows",
+    "workspace",
+    "development tools",
+    "tools",
+    "xampp alternative",
+    "laragon alternative",
+    "herd alternative",
+    "local development environment"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kenndeclouv/kythia-workspace.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kenndeclouv/kythia-workspace/issues"
+  },
+  "homepage": "https://github.com/kenndeclouv/kythia-workspace/#readme"
 }

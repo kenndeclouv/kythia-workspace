@@ -40,7 +40,7 @@ export function Profile() {
 
   const activeBadge = SHOP_ITEMS.find(item => item.type === 'badge' && item.id === data.active_badge);
   const BadgeIcon = activeBadge?.icon;
-  const activeTitle = activeBadge ? activeBadge.name : (data.active_title || "Developer");
+  const activeTitle = activeBadge ? activeBadge.name : (data.active_title || "Newbie");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

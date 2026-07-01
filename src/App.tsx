@@ -12,6 +12,7 @@ import { ThemeProvider } from './components/theme-provider';
 import { AlertTriangle, Trophy, Rocket } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 import { GamificationBadge } from './components/GamificationBadge';
+import loadingAnimation from "./assets/loading-animation.webp";
 
 // Intercept all toast calls to forward to OS Native Notification if enabled
 const originalSuccess = toast.success;
@@ -85,7 +86,13 @@ interface PortConflict {
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('kythia-active-tab') || 'dashboard';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('kythia-active-tab', activeTab);
+  }, [activeTab]);
   const [portConflicts, setPortConflicts] = useState<PortConflict[]>([]);
   
   const [statuses, setStatuses] = useState({
@@ -477,8 +484,7 @@ function App() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-secondary/20 rounded-full blur-2xl" />
         
         <div className="relative w-48 h-48 flex items-center justify-center">
-          {/* <span className="text-white font-black text-5xl tracking-tighter shadow-sm">K</span> */}
-          <img src="https://cdn.kythia.my.id/assets/images/sticker/kythia_hello_512_tiny.png" alt="" />
+          <img src={loadingAnimation} alt="Loading Animation" />
         </div>
         
         <div className="relative flex flex-col items-center">

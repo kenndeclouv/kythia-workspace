@@ -23,7 +23,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
   const activeBadge = SHOP_ITEMS.find(item => item.type === 'badge' && item.id === data?.active_badge);
   const BadgeIcon = activeBadge?.icon;
-  const activeTitle = activeBadge ? activeBadge.name : (data?.active_title || "Developer");
+  const activeTitle = activeBadge ? activeBadge.name : (data?.active_title || "Newbie");
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },

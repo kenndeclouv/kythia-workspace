@@ -128,7 +128,7 @@ button {
 
 ::-webkit-scrollbar-thumb {
   background: var(--accent);
-  border-radius: 100px;
+  border-radius: none;
 }
 
 /* Promote scrollable containers to their own compositor layer for smooth scrolling */

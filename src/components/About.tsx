@@ -1,5 +1,6 @@
 import { getVersion } from '@tauri-apps/api/app';
 import { useEffect, useState } from 'react';
+import kythiaLogo from '../assets/kythia-app-logo.webp';
 
 export function About() {
   const [version, setVersion] = useState<string>('0.1.0');
@@ -13,6 +14,7 @@ export function About() {
 
       <div className="space-y-12 pb-10">
         <section>
+          <img src={kythiaLogo} alt="Kythia Logo" className="w-[128px] h-[128px] shadow-md mb-4" />
           <div className="flex items-center gap-4">
             <div>
               <h3 className="text-3xl font-extrabold tracking-tight text-foreground">Kythia Workspace</h3>

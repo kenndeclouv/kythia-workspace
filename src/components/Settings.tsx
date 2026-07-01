@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
@@ -79,8 +80,8 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
         await invoke('add_coins', { amount: 100 });
         toast.success("Cheat Code Activated! +100 Coins", {
           duration: 3000,
-          position: 'bottom-right',
-          icon: '✨'
+          position: 'top-center',
+          icon: <Sparkles />
         });
         window.dispatchEvent(new Event('gamification-update'));
         setLicenseKey('');
@@ -91,9 +92,9 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
     }
 
     if (licenseKey.trim().length > 0) {
-      toast.success("Just kidding! Kythia is and always will be 100% free! 🎉", {
+      toast.success("Just kidding! Kythia Workspace is and always will be 100% free! 🎉", {
         duration: 5000,
-        position: 'bottom-right',
+        position: 'top-center',
         style: { fontSize: '1.1rem', padding: '16px' }
       });
       setLicenseKey('');
