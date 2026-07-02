@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
@@ -191,14 +190,17 @@ export function Packages() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl pb-10">
       
       {/* Node.js */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package2 className="text-green-500" /> Node.js
-          </CardTitle>
-          <CardDescription>JavaScript runtime (includes npm)</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <div className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center shadow-sm border border-green-500/20 shrink-0 group-hover:scale-105 transition-transform">
+            <Package2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-green-500 transition-colors">Node.js</h3>
+            <p className="text-sm text-muted-foreground dark:text-zinc-500">JavaScript runtime (includes npm)</p>
+          </div>
+        </div>
+        <div className="space-y-4 flex-1">
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Install New Version</h4>
             <div className="flex gap-2">
@@ -237,18 +239,21 @@ export function Packages() {
               </ul>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Bun */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package2 className="text-pink-500" /> Bun
-          </CardTitle>
-          <CardDescription>Fast all-in-one toolkit</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <div className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center shadow-sm border border-pink-500/20 shrink-0 group-hover:scale-105 transition-transform">
+            <Package2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-pink-500 transition-colors">Bun</h3>
+            <p className="text-sm text-muted-foreground dark:text-zinc-500">Fast all-in-one toolkit</p>
+          </div>
+        </div>
+        <div className="space-y-4 flex-1">
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Install New Version</h4>
             <div className="flex gap-2">
@@ -287,18 +292,21 @@ export function Packages() {
               </ul>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Deno */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package2 className="text-slate-500" /> Deno
-          </CardTitle>
-          <CardDescription>Secure JS/TS runtime</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <div className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-slate-500/10 text-slate-500 flex items-center justify-center shadow-sm border border-slate-500/20 shrink-0 group-hover:scale-105 transition-transform">
+            <Package2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-slate-500 transition-colors">Deno</h3>
+            <p className="text-sm text-muted-foreground dark:text-zinc-500">Secure JS/TS runtime</p>
+          </div>
+        </div>
+        <div className="space-y-4 flex-1">
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Install New Version</h4>
             <div className="flex gap-2">
@@ -337,18 +345,21 @@ export function Packages() {
               </ul>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Meilisearch */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package2 className="text-orange-500" /> Meilisearch
-          </CardTitle>
-          <CardDescription>Lightning-fast search engine</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <div className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center shadow-sm border border-orange-500/20 shrink-0 group-hover:scale-105 transition-transform">
+            <Package2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-orange-500 transition-colors">Meilisearch</h3>
+            <p className="text-sm text-muted-foreground dark:text-zinc-500">Lightning-fast search engine</p>
+          </div>
+        </div>
+        <div className="space-y-4 flex-1">
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Install New Version</h4>
             <div className="flex gap-2">
@@ -387,18 +398,21 @@ export function Packages() {
               </ul>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Composer */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package2 className="text-blue-500" /> Composer
-          </CardTitle>
-          <CardDescription>PHP dependency manager</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <div className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shadow-sm border border-blue-500/20 shrink-0 group-hover:scale-105 transition-transform">
+            <Package2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-blue-500 transition-colors">Composer</h3>
+            <p className="text-sm text-muted-foreground dark:text-zinc-500">PHP dependency manager</p>
+          </div>
+        </div>
+        <div className="space-y-4 flex-1">
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Installation</h4>
             <Button onClick={() => handleInstall('composer')} disabled={isInstalling === 'composer'} variant={installedComposer ? "outline" : "default"} className="w-full">
@@ -417,18 +431,21 @@ export function Packages() {
                </div>
             ) : <div className="text-sm text-muted-foreground italic">Not installed</div>}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* WP-CLI */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package2 className="text-teal-500" /> WP-CLI
-          </CardTitle>
-          <CardDescription>WordPress command-line tool</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <div className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center shadow-sm border border-teal-500/20 shrink-0 group-hover:scale-105 transition-transform">
+            <Package2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-teal-500 transition-colors">WP-CLI</h3>
+            <p className="text-sm text-muted-foreground dark:text-zinc-500">WordPress command-line tool</p>
+          </div>
+        </div>
+        <div className="space-y-4 flex-1">
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Installation</h4>
             <Button onClick={() => handleInstall('wp_cli')} disabled={isInstalling === 'wp_cli'} variant={installedWpCli ? "outline" : "default"} className="w-full">
@@ -447,18 +464,21 @@ export function Packages() {
                </div>
             ) : <div className="text-sm text-muted-foreground italic">Not installed</div>}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* PNPM */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package2 className="text-yellow-500" /> PNPM
-          </CardTitle>
-          <CardDescription>Fast, disk space efficient package manager</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <div className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center shadow-sm border border-yellow-500/20 shrink-0 group-hover:scale-105 transition-transform">
+            <Package2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-yellow-500 transition-colors">PNPM</h3>
+            <p className="text-sm text-muted-foreground dark:text-zinc-500">Fast, disk space efficient package manager</p>
+          </div>
+        </div>
+        <div className="space-y-4 flex-1">
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Installation</h4>
             <Button onClick={() => handleInstall('pnpm')} disabled={isInstalling === 'pnpm'} variant={installedPnpm ? "outline" : "default"} className="w-full">
@@ -477,18 +497,21 @@ export function Packages() {
                </div>
             ) : <div className="text-sm text-muted-foreground italic">Not installed</div>}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Yarn */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package2 className="text-cyan-500" /> Yarn
-          </CardTitle>
-          <CardDescription>Safe, stable, reproducible projects</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <div className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center shadow-sm border border-cyan-500/20 shrink-0 group-hover:scale-105 transition-transform">
+            <Package2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-cyan-500 transition-colors">Yarn</h3>
+            <p className="text-sm text-muted-foreground dark:text-zinc-500">Safe, stable, reproducible projects</p>
+          </div>
+        </div>
+        <div className="space-y-4 flex-1">
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Installation</h4>
             <Button onClick={() => handleInstall('yarn')} disabled={isInstalling === 'yarn'} variant={installedYarn ? "outline" : "default"} className="w-full">
@@ -507,8 +530,8 @@ export function Packages() {
                </div>
             ) : <div className="text-sm text-muted-foreground italic">Not installed</div>}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
     </div>
   );

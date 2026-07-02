@@ -195,12 +195,12 @@ pub fn stop(pid: Option<u32>) -> Result<(), String> {
     if let Some(p) = pid {
         let _ = std::process::Command::new("taskkill")
             .args(["/PID", &p.to_string(), "/F", "/T"])
-            .creation_flags(0x08000000)
+            .creation_flags(0x08000000).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null())
             .status();
     }
     let _ = std::process::Command::new("taskkill")
         .args(["/IM", "mysqld.exe", "/F", "/T"])
-        .creation_flags(0x08000000)
+        .creation_flags(0x08000000).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null())
         .status();
     Ok(())
 }

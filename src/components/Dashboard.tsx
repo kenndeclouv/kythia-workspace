@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { Play, Square, Activity, Server, Terminal, Database, HardDrive, Settings, Mail, Rocket } from 'lucide-react';
 import { Button } from './ui/button';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
@@ -163,7 +164,7 @@ export function Dashboard({ statuses, activeDatabaseEngine, activeVersions, onSt
           <AlertTitle className="font-bold">Update Available!</AlertTitle>
           <AlertDescription>
             A new version of Kythia Workspace is available.
-            <a href={updateAvailable} target="_blank" rel="noreferrer" className="underline ml-1 font-bold hover:text-indigo-300 transition-colors">Download it here</a>.
+            <span onClick={() => openUrl(updateAvailable)} className="underline ml-1 font-bold hover:text-indigo-300 transition-colors cursor-pointer">Download it here</span>.
           </AlertDescription>
         </Alert>
       )}

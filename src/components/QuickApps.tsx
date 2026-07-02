@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
+
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { Database, Download, ExternalLink, Globe, Info, Folder, ShoppingCart, Code, LineChart, MessageSquare, Book, Gauge } from 'lucide-react';
@@ -262,17 +262,20 @@ export function QuickApps() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {apps.map(app => (
-          <Card key={app.id} className="flex flex-col h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <div key={app.id} className="bg-card dark:bg-[#141414] hover:bg-accent/50 dark:hover:bg-[#1a1a1a] text-card-foreground p-5 rounded-2xl border border-border/50 dark:border-zinc-800/60 hover:border-border dark:hover:border-zinc-700 shadow-sm relative group overflow-hidden transition-all duration-200 flex flex-col h-full">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-secondary/50 dark:bg-zinc-800/50 flex items-center justify-center shadow-sm border border-border/50 dark:border-zinc-700/50 shrink-0 group-hover:scale-105 transition-transform">
                 {app.icon}
-                {app.title}
-              </CardTitle>
-              <CardDescription>{app.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-foreground dark:text-white group-hover:text-primary transition-colors">{app.title}</h3>
+                <p className="text-sm text-muted-foreground dark:text-zinc-500 line-clamp-2" title={app.description}>{app.description}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 flex-1">
               {app.progress && app.progress.status !== 'done' && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-muted-foreground">
@@ -282,13 +285,13 @@ export function QuickApps() {
                   <Progress value={app.progress.percent} className="h-2" />
                 </div>
               )}
-            </CardContent>
-            <CardFooter className="flex-col gap-2 mt-auto">
+            </div>
+            <div className="flex flex-col gap-2 mt-auto pt-4 border-t border-border/50 dark:border-zinc-800/50">
               {!status[app.id] ? (
                 <Button
                   onClick={() => handleInstall(app.id, app.title)}
                   disabled={installing[app.id]}
-                  className="w-full"
+                  className="w-full bg-primary/90 hover:bg-primary text-white border-0 shadow-lg shadow-primary/20"
                 >
                   {installing[app.id] ? 'Installing...' : (
                     <>
@@ -301,7 +304,7 @@ export function QuickApps() {
                 <>
                   <Button
                     onClick={() => handleOpen(app.path)}
-                    className={`w-full text-white ${app.colorClass}`}
+                    className={`w-full text-white border-0 shadow-lg opacity-90 hover:opacity-100 transition-opacity ${app.colorClass}`}
                   >
                     <ExternalLink size={16} className="mr-2" />
                     Open {app.title}
@@ -310,14 +313,14 @@ export function QuickApps() {
                     onClick={() => handleInstall(app.id, app.title)}
                     disabled={installing[app.id]}
                     variant="outline"
-                    className="w-full"
+                    className="w-full bg-secondary/30 hover:bg-secondary/60 border-border/50"
                   >
                     {installing[app.id] ? 'Reinstalling...' : `Re-install ${app.version}`}
                   </Button>
                 </>
               )}
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     </div>

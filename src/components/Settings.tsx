@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { AppSettings } from '../types';
 import { useTheme } from './theme-provider';
 
@@ -366,7 +367,7 @@ export function Settings({ onSettingsSaved }: SettingsProps) {
             </div>
           </div>
           <div className="space-y-1">
-            <Label>Ngrok Auth Token (Required)  <a href="https://dashboard.ngrok.com/get-started/setup/windows" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Get Auth Token</a></Label>
+            <Label>Ngrok Auth Token (Required)  <span onClick={() => openUrl('https://dashboard.ngrok.com/get-started/setup/windows')} className="text-blue-500 hover:underline cursor-pointer">Get Auth Token</span></Label>
             <Input
               type="password"
               value={settings.ngrok_auth_token || ''}

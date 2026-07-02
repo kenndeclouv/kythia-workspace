@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { AppSettings } from './types';
-import { TerminalSquare, Power, Settings as SettingsIcon, Download, Globe, Play, Square, Circle } from 'lucide-react';
+import { TerminalSquare, Power, Settings as SettingsIcon, Download, Globe, Play, Square, Circle, Loader2 } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { ThemeProvider } from './components/theme-provider';
 
 export function TrayApp() {
+  const [loadingServices, setLoadingServices] = useState<Record<string, boolean>>({});
   const [statuses, setStatuses] = useState({
     nginx: { running: false },
     php: { running: false },
@@ -29,36 +30,32 @@ export function TrayApp() {
     mailpit: [],
   });
 
-  const [isFocused, setIsFocused] = useState(false);
-
   useEffect(() => {
     const appWindow = getCurrentWindow();
     let unlistenFocus: (() => void) | undefined;
 
     const setup = async () => {
-      const focused = await appWindow.isFocused();
-      setIsFocused(focused);
+      loadSettings();
+      loadInstalledVersions();
+      pollStatuses();
       
       unlistenFocus = await appWindow.onFocusChanged(({ payload: focused }) => {
-        setIsFocused(focused);
+        if (focused) {
+          loadSettings();
+          loadInstalledVersions();
+          pollStatuses();
+        }
       });
     };
     setup();
+    
+    const interval = setInterval(pollStatuses, 3000);
 
     return () => {
       if (unlistenFocus) unlistenFocus();
+      clearInterval(interval);
     };
   }, []);
-
-  useEffect(() => {
-    if (isFocused) {
-      loadSettings();
-      pollStatuses();
-      loadInstalledVersions();
-      const interval = setInterval(pollStatuses, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [isFocused]);
 
   const loadSettings = async () => {
     try {
@@ -118,15 +115,6 @@ export function TrayApp() {
     }
   };
 
-  const handleStart = async (service: string, version: string = 'latest') => {
-    try {
-      await invoke(`start_${service}`, { version });
-      await pollStatuses();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const getVersionToStart = (service: string) => {
     const versions = installedVersions[service] || [];
     if (versions.length === 0) return null;
@@ -143,25 +131,75 @@ export function TrayApp() {
     return versions[0]; // Fallback to first installed version
   };
 
-  const toggleService = (service: string, isRunning: boolean) => {
-    const version = getVersionToStart(service);
-    if (!version) return; // Not installed
-
-    if (isRunning) {
-      // In the backend, stop might rely on the version too
-      handleStop(service, version);
-    } else {
-      handleStart(service, version);
+  const handleStart = async (service: string, optionalVersion?: string) => {
+    const version = optionalVersion || getVersionToStart(service);
+    if (!version) return;
+    
+    setLoadingServices(prev => ({ ...prev, [service]: true }));
+    try {
+      await invoke(`start_${service}`, { version });
+      await pollStatuses();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingServices(prev => ({ ...prev, [service]: false }));
     }
   };
 
-  const handleStop = async (service: string, version: string = 'latest') => {
+  const handleStop = async (service: string, optionalVersion?: string) => {
+    const version = optionalVersion || getVersionToStart(service) || 'latest';
+    setLoadingServices(prev => ({ ...prev, [service]: true }));
     try {
       await invoke(`stop_${service}`, { version });
       await pollStatuses();
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoadingServices(prev => ({ ...prev, [service]: false }));
     }
+  };
+
+  const toggleService = (service: string, isRunning: boolean) => {
+    if (isRunning) {
+      handleStop(service);
+    } else {
+      handleStart(service);
+    }
+  };
+
+  const handleStartAll = async () => {
+    setLoadingServices(prev => ({ ...prev, all: true }));
+    const promises = [];
+    if (!statuses.nginx.running) promises.push(handleStart('nginx'));
+    if (!statuses.php.running) promises.push(handleStart('php'));
+    if (!statuses.redis.running) promises.push(handleStart('redis'));
+    if (!statuses.mailpit.running && installedVersions.mailpit.length > 0) promises.push(handleStart('mailpit'));
+    
+    if (settings && settings.active_database_engine) {
+      const db = settings.active_database_engine as 'mariadb' | 'mysql' | 'postgres' | 'mongodb';
+      if (!statuses[db]?.running) promises.push(handleStart(db));
+    }
+    
+    await Promise.all(promises);
+    await pollStatuses();
+    setLoadingServices(prev => ({ ...prev, all: false }));
+  };
+
+  const handleStopAll = async () => {
+    setLoadingServices(prev => ({ ...prev, all: true }));
+    const promises = [];
+    if (statuses.nginx.running) promises.push(handleStop('nginx'));
+    if (statuses.php.running) promises.push(handleStop('php'));
+    if (statuses.redis.running) promises.push(handleStop('redis'));
+    if (statuses.mariadb.running) promises.push(handleStop('mariadb'));
+    if (statuses.mysql.running) promises.push(handleStop('mysql'));
+    if (statuses.postgres.running) promises.push(handleStop('postgres'));
+    if (statuses.mongodb.running) promises.push(handleStop('mongodb'));
+    if (statuses.mailpit.running) promises.push(handleStop('mailpit'));
+    
+    await Promise.all(promises);
+    await pollStatuses();
+    setLoadingServices(prev => ({ ...prev, all: false }));
   };
 
   const openMainWindow = async (tab?: string) => {
@@ -189,17 +227,26 @@ export function TrayApp() {
     }
   };
 
-  const ServiceItem = ({ name, id, isRunning }: { name: string, id: string, isRunning: boolean }) => (
-    <div className="flex items-center justify-between px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors group" onClick={() => toggleService(id, isRunning)}>
-      <div className="flex items-center gap-3">
-        <Circle className={`w-2.5 h-2.5 fill-current ${isRunning ? 'text-green-500' : 'text-neutral-400'}`} />
-        <span className="text-sm font-medium">{name} {id === 'php' ? settings?.active_php_version : ''}</span>
+  const ServiceItem = ({ name, id, isRunning }: { name: string, id: string, isRunning: boolean }) => {
+    const isLoading = loadingServices[id] || loadingServices['all'];
+    return (
+      <div className="flex items-center justify-between px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors group" onClick={() => isLoading ? null : toggleService(id, isRunning)}>
+        <div className="flex items-center gap-3">
+          <Circle className={`w-2.5 h-2.5 fill-current ${isRunning ? 'text-green-500' : 'text-neutral-400'}`} />
+          <span className="text-sm font-medium">{name} {id === 'php' ? settings?.active_php_version : ''}</span>
+        </div>
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          {isLoading ? (
+            <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+          ) : isRunning ? (
+            <Square className="w-3.5 h-3.5 text-red-500" />
+          ) : (
+            <Play className="w-3.5 h-3.5 text-green-500" />
+          )}
+        </div>
       </div>
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-        {isRunning ? <Square className="w-3.5 h-3.5 text-red-500" /> : <Play className="w-3.5 h-3.5 text-green-500" />}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
@@ -231,10 +278,20 @@ export function TrayApp() {
             <h2 className="text-xs font-semibold text-muted-foreground">Services</h2>
           </div>
           <div className="flex flex-col mt-1">
-            {/* <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors text-red-500 hover:text-red-600">
-              <Square className="w-4 h-4" />
-              <span className="text-sm">Stop all services</span>
-            </div> */}
+            <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors group" onClick={() => loadingServices['all'] ? null : handleStartAll()}>
+              <div className="flex items-center gap-3 w-full">
+                {loadingServices['all'] ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Play className="w-3.5 h-3.5 text-green-500" />}
+                <span className="text-sm font-medium">Start All Services</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 px-4 py-2 hover:bg-accent/50 cursor-pointer transition-colors group" onClick={() => loadingServices['all'] ? null : handleStopAll()}>
+              <div className="flex items-center gap-3 w-full">
+                {loadingServices['all'] ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Square className="w-3.5 h-3.5 text-red-500" />}
+                <span className="text-sm font-medium">Stop All Services</span>
+              </div>
+            </div>
+            
+            <div className="h-px bg-border my-2 mx-4" />
 
             <ServiceItem name="NGINX" id="nginx" isRunning={statuses.nginx.running} />
             <ServiceItem name="PHP" id="php" isRunning={statuses.php.running} />
@@ -246,6 +303,7 @@ export function TrayApp() {
               />
             )}
             <ServiceItem name="Redis" id="redis" isRunning={statuses.redis.running} />
+            <ServiceItem name="Mailpit" id="mailpit" isRunning={statuses.mailpit.running} />
           </div>
 
           <div className="h-px bg-border my-2 mx-4" />

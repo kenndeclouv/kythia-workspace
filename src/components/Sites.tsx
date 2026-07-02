@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Button } from './ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Switch } from './ui/switch';
 import { toast } from 'sonner';
 import { Globe, Lock, Unlock, Link as LinkIcon, ExternalLink, Loader2, RefreshCw, TriangleAlert, Info } from 'lucide-react';
@@ -136,93 +135,90 @@ export function Sites() {
           <h3 className="text-xl font-semibold tracking-tight">Local Projects</h3>
           <p className="text-sm text-muted-foreground mt-1">Manage SSL certificates and local sharing via Ngrok.</p>
         </div>
-        <div>
-          {sites.length === 0 && !isLoading ? (
-            <div className="text-center py-12 border border-border/50 rounded-lg bg-secondary/20 text-muted-foreground">
-              <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No projects found in your document root.</p>
+        <div className="flex-1 overflow-y-auto pb-10 custom-scrollbar">
+          <div className="bg-card dark:bg-[#141414] text-card-foreground rounded-2xl border border-border/50 dark:border-zinc-800/60 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-border/50 dark:border-zinc-800/60 bg-secondary/30 dark:bg-white/[0.02] font-semibold text-sm text-muted-foreground">
+              <div className="col-span-4">Project</div>
+              <div className="col-span-4">URL</div>
+              <div className="col-span-2 text-center">SSL</div>
+              <div className="col-span-2 text-right">Share</div>
             </div>
-          ) : (
-            <div className="border border-border/50 rounded-lg overflow-hidden bg-background">
-              <Table>
-                <TableHeader className="bg-secondary/30">
-                  <TableRow>
-                    <TableHead>Project</TableHead>
-                    <TableHead>URL</TableHead>
-                    <TableHead className="w-[120px] text-center">SSL</TableHead>
-                    <TableHead className="w-[150px] text-right">Share</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sites.map((site) => {
-                    const protocol = site.secured ? 'https' : 'http';
-                    const fullUrl = `${protocol}://${site.domain}`;
-                    const isSecuring = securingDomain === site.domain;
-                    const isSharing = sharingDomain === site.domain;
-                    const isShared = sharedSites.includes(site.domain);
+            
+            {isLoading && sites.length === 0 ? (
+              <div className="py-16 flex flex-col items-center justify-center text-center text-muted-foreground">
+                <RefreshCw className="h-8 w-8 animate-spin mb-4 opacity-50" />
+                <p className="text-lg font-medium text-foreground">Loading projects...</p>
+              </div>
+            ) : sites.length === 0 && !isLoading ? (
+              <div className="py-16 flex flex-col items-center justify-center text-center text-muted-foreground">
+                <Globe className="w-12 h-12 mb-4 opacity-30" />
+                <p className="text-lg font-medium text-foreground">No projects found</p>
+                <p className="text-sm mt-1 max-w-md">
+                  No projects found in your document root.
+                </p>
+              </div>
+            ) : sites.length > 0 ? sites.map((site) => {
+              const protocol = site.secured ? 'https' : 'http';
+              const fullUrl = `${protocol}://${site.domain}`;
+              const isSecuring = securingDomain === site.domain;
+              const isSharing = sharingDomain === site.domain;
+              const isShared = sharedSites.includes(site.domain);
 
-                    return (
-                      <TableRow key={site.domain} className="hover:bg-secondary/20 transition-colors">
-                        <TableCell className="font-medium">
-                          <div className="flex flex-col">
-                            <span>{site.name}</span>
-                            <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={site.path}>
-                              {site.path}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <a 
-                            href={fullUrl} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="flex items-center text-primary hover:underline"
-                          >
-                            {site.secured ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1 text-muted-foreground" />}
-                            {site.domain}
-                            <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
-                          </a>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center space-x-2">
-                            <Switch 
-                              checked={site.secured}
-                              disabled={isSecuring}
-                              onCheckedChange={(c) => handleSecureToggle(site, c)}
-                            />
-                            {isSecuring && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {hasNgrokToken ? (
-                            <Button 
-                              variant={isShared ? "destructive" : "secondary"} 
-                              size="sm" 
-                              disabled={isSharing}
-                              onClick={() => handleShare(site.domain)}
-                              className="w-full"
-                            >
-                              {isSharing ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : isShared ? (
-                                "Stop"
-                              ) : (
-                                <>
-                                  <LinkIcon className="w-4 h-4 mr-1" /> Share
-                                </>
-                              )}
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">Requires Token</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+              return (
+                <div key={site.domain} className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-border/10 dark:border-zinc-800/40 hover:bg-accent/50 dark:hover:bg-[#1a1a1a] transition-colors items-center text-sm group">
+                  <div className="col-span-4 font-medium flex flex-col">
+                    <span>{site.name}</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={site.path}>
+                      {site.path}
+                    </span>
+                  </div>
+                  <div className="col-span-4">
+                    <a 
+                      href={fullUrl} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="flex items-center text-primary hover:underline"
+                    >
+                      {site.secured ? <Lock className="w-3 h-3 mr-1" /> : <Unlock className="w-3 h-3 mr-1 text-muted-foreground" />}
+                      {site.domain}
+                      <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
+                    </a>
+                  </div>
+                  <div className="col-span-2 flex items-center justify-center space-x-2">
+                    <Switch 
+                      checked={site.secured}
+                      disabled={isSecuring}
+                      onCheckedChange={(c) => handleSecureToggle(site, c)}
+                    />
+                    {isSecuring && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+                  </div>
+                  <div className="col-span-2 flex justify-end">
+                    {hasNgrokToken ? (
+                      <Button 
+                        variant={isShared ? "destructive" : "secondary"} 
+                        size="sm" 
+                        disabled={isSharing}
+                        onClick={() => handleShare(site.domain)}
+                        className="w-full max-w-[120px]"
+                      >
+                        {isSharing ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : isShared ? (
+                          "Stop"
+                        ) : (
+                          <>
+                            <LinkIcon className="w-4 h-4 mr-1" /> Share
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic flex items-center">Requires Token</span>
+                    )}
+                  </div>
+                </div>
+              );
+            }) : null}
+          </div>
         </div>
       </section>
     </div>

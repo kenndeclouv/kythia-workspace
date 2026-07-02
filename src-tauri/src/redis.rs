@@ -68,7 +68,8 @@ pub fn start(version: &str) -> Result<u32, String> {
     let _ = fs::write(&conf_path, conf_content);
 
     let child = std::process::Command::new(&redis_exe)
-        .arg(&conf_path)
+        .current_dir(&conf_dir)
+        .arg("redis.conf")
         .creation_flags(0x08000000)
         .spawn()
         .map_err(|e| format!("Failed to start Redis: {}", e))?;
@@ -91,12 +92,12 @@ pub fn stop(pid: Option<u32>) -> Result<(), String> {
     if let Some(p) = pid {
         let _ = std::process::Command::new("taskkill")
             .args(["/PID", &p.to_string(), "/F", "/T"])
-            .creation_flags(0x08000000)
+            .creation_flags(0x08000000).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null())
             .status();
     }
     let _ = std::process::Command::new("taskkill")
         .args(["/IM", "redis-server.exe", "/F", "/T"])
-        .creation_flags(0x08000000)
+        .creation_flags(0x08000000).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null())
         .status();
     Ok(())
 }

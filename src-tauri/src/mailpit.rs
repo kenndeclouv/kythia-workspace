@@ -158,7 +158,7 @@ pub fn stop(_version: &str) -> Result<(), String> {
     // Mailpit doesn't have a built-in graceful stop command, so we kill it.
     let _ = std::process::Command::new("taskkill")
         .args(["/IM", "mailpit.exe", "/F"])
-        .creation_flags(0x08000000)
+        .creation_flags(0x08000000).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null())
         .status();
     Ok(())
 }
